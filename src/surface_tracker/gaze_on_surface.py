@@ -5,7 +5,7 @@ import numpy as np
 from .surface import Surface
 
 
-class GazeOnSurfaceDistribution:
+class GazeOnSurface:
     def __init__(
         self,
         gaze: list,
