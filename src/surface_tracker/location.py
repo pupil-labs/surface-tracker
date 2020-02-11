@@ -2,6 +2,7 @@ import typing as T
 
 import numpy as np
 
+from .camera import CameraModel
 from .surface import Surface, SurfaceId
 
 
@@ -15,6 +16,26 @@ class SurfaceLocation:
         img_to_surf_trans,
         surf_to_img_trans,
     ):
+        raise NotImplementedError()
+
+    ### Mapping
+
+    def map_from_image_to_surface(
+        self,
+        points: np.ndarray,
+        camera_model: CameraModel,
+        compensate_distortion: bool = True,
+        transform_matrix=None,
+    ) -> np.ndarray:
+        raise NotImplementedError()
+
+    def map_from_surface_to_image(
+        self,
+        points: np.ndarray,
+        camera_model: CameraModel,
+        compensate_distortion: bool = True,
+        transform_matrix=None,
+    ) -> np.ndarray:
         raise NotImplementedError()
 
     ### Serialize
