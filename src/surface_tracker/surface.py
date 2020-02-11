@@ -28,11 +28,6 @@ class Surface(abc.ABC):
     def version(self) -> int:
         raise NotImplementedError()
 
-    @property
-    @abc.abstractmethod
-    def world_size(self) -> T.Tuple[int, int]:
-        raise NotImplementedError()
-
     ### Update
 
     @abc.abstractmethod
