@@ -8,13 +8,10 @@ from .surface import Surface
 class GazeOnSurfaceDistribution:
     def __init__(
         self,
+        gaze: list,
         surface: Surface,
         heatmap_size: T.Tuple[int, int],
-        gaze: T.Optional[list] = None,
     ):
-        raise NotImplementedError()
-
-    def update(self, gaze: T.Optional[list]):
         # TODO: Type annotate `gaze`
         raise NotImplementedError()
 
