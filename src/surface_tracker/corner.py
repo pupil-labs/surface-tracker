@@ -23,7 +23,14 @@ class CornerId(enum.Enum):
             List of `CornerId`
         """
         starting_with = CornerId.TOP_LEFT if starting_with is None else starting_with
-        corners = list(CornerId)
+
+        # Canonical order of the corners
+        corners = [
+            CornerId.TOP_LEFT,
+            CornerId.TOP_RIGHT,
+            CornerId.BOTTOM_RIGHT,
+            CornerId.BOTTOM_LEFT,
+        ]
 
         if not clockwise:
             corners.reverse()
