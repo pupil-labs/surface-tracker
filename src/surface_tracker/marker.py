@@ -1,31 +1,37 @@
+import abc
 import typing as T
+
+from .corner import CornerId
 
 
 MarkerId = T.NewType("MarkerId", str)
 
 
-class Marker:
-    def __init__(self, uid: MarkerId, vert):
-        # TODO: Type annotate `vert`
-        # TODO: Come up with a more descriptive name for `vert`
-        self.__uid = uid
-        self.__vert = vert
+VertexInImageSpace = T.Tuple[int, int]
+
+
+class Marker(abc.ABC):
+
+    ### Abstract members
 
     @property
+    @abc.abstractmethod
     def uid(self) -> MarkerId:
-        return self.__uid
+        raise NotImplementedError()
 
-    @property
-    def vert(self):
-        # TODO: Type annotate `vert`
-        # TODO: Come up with a more descriptive name for `vert`
-        return self.__vert
+    @abc.abstractmethod
+    def vertices(self) -> T.List[tuple]:
+        # TODO: Add option to explicitly define the order of the vertices list
+        # e.g.: marker.vertices_in_image_space(starting_with=CornerId.BOTTOM_RIGHT, clockwise=False)
+        raise NotImplementedError()
 
     ### Serialize
 
     @staticmethod
-    def from_dict(self) -> dict:
         raise NotImplementedError()
+    @abc.abstractmethod
+    def from_dict(value: dict) -> "Marker":
 
+    @abc.abstractmethod
     def as_dict(self) -> dict:
         raise NotImplementedError()
