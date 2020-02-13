@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 
 from .camera import CameraModel
+from .marker import Marker, MarkerId
 from .surface import Surface, SurfaceId
 
 
@@ -63,17 +64,14 @@ class SurfaceLocation(abc.ABC):
     ### Factory
 
     @staticmethod
-    def create_location(
-        surface_uid: SurfaceId,
-        number_of_markers_detected: int,
-        transform_matrix_from_image_to_surface_distorted: np.ndarray,
-        transform_matrix_from_surface_to_image_distorted: np.ndarray,
-        transform_matrix_from_image_to_surface_undistorted: np.ndarray,
-        transform_matrix_from_surface_to_image_undistorted: np.ndarray,
+    def _create_location_from_markers(
+        surface: Surface,
+        markers: T.List[Marker],
+        camera_model: CameraModel,
     ) -> "SurfaceLocation":
         return _SurfaceLocation_v2(
-            surface_uid=surface_uid,
-            number_of_markers_detected=number_of_markers_detected,
+            surface_uid=surface.uid,
+            number_of_markers_detected=len(matching_marker_uids),
             transform_matrix_from_image_to_surface_distorted=transform_matrix_from_image_to_surface_distorted,
             transform_matrix_from_surface_to_image_distorted=transform_matrix_from_surface_to_image_distorted,
             transform_matrix_from_image_to_surface_undistorted=transform_matrix_from_image_to_surface_undistorted,
