@@ -69,14 +69,16 @@ class SurfaceLocation(abc.ABC):
 
     @staticmethod
     def _create_location_from_markers(
-        surface: Surface,
-        markers: T.List[Marker],
-        camera_model: CameraModel,
+        surface: Surface, markers: T.List[Marker], camera_model: CameraModel
     ) -> "SurfaceLocation":
 
         registered_marker_uids = set(surface.registered_marker_uids)
-        registered_markers_by_uid_distorted = surface.registered_markers_by_uid_distorted
-        registered_markers_by_uid_undistorted = surface.registered_markers_by_uid_undistorted
+        registered_markers_by_uid_distorted = (
+            surface.registered_markers_by_uid_distorted
+        )
+        registered_markers_by_uid_undistorted = (
+            surface.registered_markers_by_uid_undistorted
+        )
 
         # Return None for an invalid surface definition
         if len(registered_marker_uids) == 0:
@@ -89,7 +91,11 @@ class SurfaceLocation(abc.ABC):
             raise ValueError(f"Detected markers must be unique")
 
         # Only keep the visible marker UIDs for markers that define the surface
-        visible_markers_by_uid = {uid: m for uid, m in visible_markers_by_uid.items() if uid in registered_marker_uids}
+        visible_markers_by_uid = {
+            uid: m
+            for uid, m in visible_markers_by_uid.items()
+            if uid in registered_marker_uids
+        }
 
         # If the surface is defined by 1 marker, but it's missing - return
         if len(registered_marker_uids) == 1 and len(visible_markers_by_uid) == 0:
@@ -102,20 +108,31 @@ class SurfaceLocation(abc.ABC):
         matching_marker_uids = set(visible_markers_by_uid.keys())
 
         visible_vertices_distorted = np.array(
-            [visible_markers_by_uid[uid]._vertices_in_image_space() for uid in matching_marker_uids]
+            [
+                visible_markers_by_uid[uid]._vertices_in_image_space()
+                for uid in matching_marker_uids
+            ]
         )
         visible_vertices_distorted.shape = (-1, 2)
 
-        visible_vertices_undistorted = camera_model.undistort_points_on_image_plane(visible_vertices_distorted)
+        visible_vertices_undistorted = camera_model.undistort_points_on_image_plane(
+            visible_vertices_distorted
+        )
         visible_vertices_undistorted.shape = (-1, 2)
 
         registered_vertices_distorted = np.array(
-            [registered_markers_by_uid_distorted[uid]._vertices_in_surface_space() for uid in matching_marker_uids]
+            [
+                registered_markers_by_uid_distorted[uid]._vertices_in_surface_space()
+                for uid in matching_marker_uids
+            ]
         )
         registered_vertices_distorted.shape = (-1, 2)
 
         registered_vertices_undistorted = np.array(
-            [registered_markers_by_uid_undistorted[uid]._vertices_in_surface_space() for uid in matching_marker_uids]
+            [
+                registered_markers_by_uid_undistorted[uid]._vertices_in_surface_space()
+                for uid in matching_marker_uids
+            ]
         )
         registered_vertices_undistorted.shape = (-1, 2)
 

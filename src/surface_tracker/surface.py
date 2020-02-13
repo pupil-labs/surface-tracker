@@ -66,7 +66,9 @@ class Surface(abc.ABC):
     def registered_marker_uids(self) -> T.Set[MarkerId]:
         marker_uids_distorted = set(self.registered_markers_by_uid_distorted.keys())
         marker_uids_undistorted = set(self.registered_markers_by_uid_undistorted.keys())
-        marker_uids_diff = marker_uids_distorted.symmetric_difference(marker_uids_undistorted)
+        marker_uids_diff = marker_uids_distorted.symmetric_difference(
+            marker_uids_undistorted
+        )
 
         for uid in marker_uids_diff:
             logger.debug(f"Removing inconsistently registered marker with UID: {uid}")
@@ -107,7 +109,9 @@ class Surface(abc.ABC):
     ### Factory
 
     @staticmethod
-    def _create_surface_from_markers(name: str, markers: T.List[Marker], camera_model: CameraModel) -> T.Optional["Surface"]:
+    def _create_surface_from_markers(
+        name: str, markers: T.List[Marker], camera_model: CameraModel
+    ) -> T.Optional["Surface"]:
         if not markers:
             return None
 
@@ -117,10 +121,16 @@ class Surface(abc.ABC):
 
         vertices_distorted = np.array(vertices, dtype=np.float32)
         vertices_distorted.shape = (-1, 2)
-        vertices_undistorted = camera_model.undistort_points_on_image_plane(vertices_distorted)
+        vertices_undistorted = camera_model.undistort_points_on_image_plane(
+            vertices_distorted
+        )
 
-        marker_surface_coordinates_distorted = _get_marker_surface_coordinates(vertices_distorted)
-        marker_surface_coordinates_undistorted = _get_marker_surface_coordinates(vertices_undistorted)
+        marker_surface_coordinates_distorted = _get_marker_surface_coordinates(
+            vertices_distorted
+        )
+        marker_surface_coordinates_undistorted = _get_marker_surface_coordinates(
+            vertices_undistorted
+        )
 
         # Reshape to [marker, marker...]
         # where marker = [[u1, v1], [u2, v2], [u3, v3], [u4, v4]]
@@ -132,15 +142,21 @@ class Surface(abc.ABC):
 
         # Add observations to library
         for marker, uv_dist, uv_undist in zip(
-            markers, marker_surface_coordinates_distorted, marker_surface_coordinates_undistorted
+            markers,
+            marker_surface_coordinates_distorted,
+            marker_surface_coordinates_undistorted,
         ):
             registered_markers_distorted[marker.uid] = _MarkerInSurfaceSpace(
                 uid=marker.uid,
-                vertices_in_surface_space_by_corner_id=dict(zip(corners, uv_dist.tolist()))
+                vertices_in_surface_space_by_corner_id=dict(
+                    zip(corners, uv_dist.tolist())
+                ),
             )
             registered_markers_undistorted[marker.uid] = _MarkerInSurfaceSpace(
                 uid=marker.uid,
-                vertices_in_surface_space_by_corner_id=dict(zip(corners, uv_undist.tolist()))
+                vertices_in_surface_space_by_corner_id=dict(
+                    zip(corners, uv_undist.tolist())
+                ),
             )
 
         # Create a new unique identifier for this surface
@@ -169,13 +185,15 @@ def _check_markers_uniqueness(markers: T.List[Marker]) -> T.List[Marker]:
         if len(non_unique) > 1:
             logger.debug(f"Duplicate markers with uid {uid}.")
         unique_markers.append(non_unique[0])
-    
+
     return unique_markers
 
 
 def _get_marker_surface_coordinates(vertices: np.ndarray) -> np.ndarray:
     hull_distorted = bounding_quadrangle(vertices)
-    transform_candidate_image_to_surface = _get_transform_to_normalized_corners(hull_distorted)
+    transform_candidate_image_to_surface = _get_transform_to_normalized_corners(
+        hull_distorted
+    )
     shape = vertices.shape
     vertices.shape = (-1, 1, 2)
     transform = cv2.perspectiveTransform(vertices, transform_candidate_image_to_surface)
@@ -215,10 +233,14 @@ class _Surface_V2(Surface):
 
     def as_dict(self) -> dict:
         registered_markers_distorted = self.__registered_markers_distorted
-        registered_markers_distorted = dict((k, v.as_dict()) for k, v in registered_markers_distorted.items())
+        registered_markers_distorted = dict(
+            (k, v.as_dict()) for k, v in registered_markers_distorted.items()
+        )
 
         registered_markers_undistorted = self.__registered_markers_undistorted
-        registered_markers_undistorted = dict((k, v.as_dict()) for k, v in registered_markers_undistorted.items())
+        registered_markers_undistorted = dict(
+            (k, v.as_dict()) for k, v in registered_markers_undistorted.items()
+        )
 
         return {
             "version": self.version,
@@ -238,10 +260,16 @@ class _Surface_V2(Surface):
             ), f"Surface version missmatch; expected {expected_version}, but got {actual_version}"
 
             registered_markers_distorted = version["registered_markers_distorted"]
-            registered_markers_distorted = dict((k, Marker.from_dict(v)) for k, v in registered_markers_distorted.items())
+            registered_markers_distorted = dict(
+                (k, Marker.from_dict(v))
+                for k, v in registered_markers_distorted.items()
+            )
 
             registered_markers_undistorted = version["registered_markers_undistorted"]
-            registered_markers_undistorted = dict((k, Marker.from_dict(v)) for k, v in registered_markers_undistorted.items())
+            registered_markers_undistorted = dict(
+                (k, Marker.from_dict(v))
+                for k, v in registered_markers_undistorted.items()
+            )
 
             return _Surface_V2(
                 uid=SurfaceId(value["uid"]),

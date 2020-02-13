@@ -10,9 +10,10 @@ from .surface import Surface, SurfaceId
 
 
 class SurfaceVisualAnchors:
-
     @staticmethod
-    def _create_from_location(location: SurfaceLocation, camera_model: CameraModel) -> "SurfaceVisualAnchors":
+    def _create_from_location(
+        location: SurfaceLocation, camera_model: CameraModel
+    ) -> "SurfaceVisualAnchors":
 
         perimeter_corners = CornerId.all_corners()
         perimeter_corners = [c.as_tuple() for c in perimeter_corners]
@@ -28,7 +29,9 @@ class SurfaceVisualAnchors:
             compensate_distortion=False,
         )
 
-        top_indicator_points_in_surface_space = np.array(top_indicator_corners, dtype=np.float32)
+        top_indicator_points_in_surface_space = np.array(
+            top_indicator_corners, dtype=np.float32
+        )
         top_indicator_points_in_image_space = location.map_from_surface_to_image(
             points=top_indicator_points_in_surface_space,
             camera_model=camera_model,
@@ -49,7 +52,14 @@ class SurfaceVisualAnchors:
             edit_markers_anchor=edit_markers_anchor,
         )
 
-    def __init__(self, top_polyline: T.List[T.Tuple[float, float]], perimeter_polyline: T.List[T.Tuple[float, float]], title_anchor: T.Tuple[float, float], edit_surface_anchor: T.Tuple[float, float], edit_markers_anchor: T.Tuple[float, float]):
+    def __init__(
+        self,
+        top_polyline: T.List[T.Tuple[float, float]],
+        perimeter_polyline: T.List[T.Tuple[float, float]],
+        title_anchor: T.Tuple[float, float],
+        edit_surface_anchor: T.Tuple[float, float],
+        edit_markers_anchor: T.Tuple[float, float],
+    ):
         self.__top_polyline = top_polyline
         self.__perimeter_polyline = perimeter_polyline
         self.__title_anchor = title_anchor
