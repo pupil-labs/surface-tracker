@@ -1,4 +1,5 @@
 import abc
+import logging
 import typing as T
 
 import numpy as np
@@ -7,6 +8,9 @@ import cv2
 from .camera import CameraModel
 from .marker import Marker, MarkerId
 from .surface import Surface, SurfaceId
+
+
+logger = logging.getLogger(__name__)
 
 
 class SurfaceLocation(abc.ABC):
@@ -69,6 +73,60 @@ class SurfaceLocation(abc.ABC):
         markers: T.List[Marker],
         camera_model: CameraModel,
     ) -> "SurfaceLocation":
+
+        registered_marker_uids = set(surface.registered_marker_uids)
+        registered_markers_by_uid_distorted = surface.registered_markers_by_uid_distorted
+        registered_markers_by_uid_undistorted = surface.registered_markers_by_uid_undistorted
+
+        # Return None for an invalid surface definition
+        if len(registered_marker_uids) == 0:
+            logger.debug(f"Surface does not have any registered markers that define it")
+            return None
+
+        # Get the marker UIDs for the visible markers
+        visible_markers_by_uid = {m.uid: m for m in markers}
+        if len(visible_markers_by_uid) < len(markers):
+            raise ValueError(f"Detected markers must be unique")
+
+        # Only keep the visible marker UIDs for markers that define the surface
+        visible_markers_by_uid = {uid: m for uid, m in visible_markers_by_uid.items() if uid in registered_marker_uids}
+
+        # If the surface is defined by 1 marker, but it's missing - return
+        if len(registered_marker_uids) == 1 and len(visible_markers_by_uid) == 0:
+            return None
+        # If the surface is defined by 2 or more markers, but there are fewer than 2 markers visible - return
+        elif len(registered_marker_uids) >= 2 and len(visible_markers_by_uid) < 2:
+            return None
+
+        # Get the set of marker UIDs that are both visible and registered
+        matching_marker_uids = set(visible_markers_by_uid.keys())
+
+        visible_vertices_distorted = np.array(
+            [visible_markers_by_uid[uid]._vertices_in_image_space() for uid in matching_marker_uids]
+        )
+        visible_vertices_distorted.shape = (-1, 2)
+
+        visible_vertices_undistorted = camera_model.undistort_points_on_image_plane(visible_vertices_distorted)
+        visible_vertices_undistorted.shape = (-1, 2)
+
+        registered_vertices_distorted = np.array(
+            [registered_markers_by_uid_distorted[uid]._vertices_in_surface_space() for uid in matching_marker_uids]
+        )
+        registered_vertices_distorted.shape = (-1, 2)
+
+        registered_vertices_undistorted = np.array(
+            [registered_markers_by_uid_undistorted[uid]._vertices_in_surface_space() for uid in matching_marker_uids]
+        )
+        registered_vertices_undistorted.shape = (-1, 2)
+
+        transform_matrix_from_image_to_surface_distorted, transform_matrix_from_surface_to_image_distorted = _find_homographies(
+            registered_vertices_distorted, visible_vertices_distorted
+        )
+
+        transform_matrix_from_image_to_surface_undistorted, transform_matrix_from_surface_to_image_undistorted = _find_homographies(
+            registered_vertices_undistorted, visible_vertices_undistorted
+        )
+
         return _SurfaceLocation_v2(
             surface_uid=surface.uid,
             number_of_markers_detected=len(matching_marker_uids),
@@ -189,6 +247,41 @@ class SurfaceLocation(abc.ABC):
         points.shape = shape
 
         return points
+
+
+##### Helper functions
+
+
+def _find_homographies(points_A, points_B):
+    points_A = points_A.reshape((-1, 1, 2))
+    points_B = points_B.reshape((-1, 1, 2))
+
+    B_to_A, mask = cv2.findHomography(points_A, points_B)
+    # NOTE: cv2.findHomography(A, B) will not produce the inverse of
+    # cv2.findHomography(B, A)! The errors can actually be quite large, resulting in
+    # on-screen discrepancies of up to 50 pixels. We try to find the inverse
+    # analytically instead with fallbacks.
+
+    try:
+        A_to_B = np.linalg.inv(B_to_A)
+        return A_to_B, B_to_A
+    except np.linalg.LinAlgError as e:
+        logger.debug(
+            "Failed to calculate inverse homography with np.inv()! "
+            "Trying with np.pinv() instead."
+        )
+
+    try:
+        A_to_B = np.linalg.pinv(B_to_A)
+        return A_to_B, B_to_A
+    except np.linalg.LinAlgError as e:
+        logger.warning(
+            "Failed to calculate inverse homography with np.pinv()! "
+            "Falling back to inaccurate manual computation!"
+        )
+
+    A_to_B, mask = cv2.findHomography(points_B, points_A)
+    return A_to_B, B_to_A
 
 
 ##### Concrete implementations
