@@ -6,7 +6,7 @@ package = "surface_tracker"
 package_data = {}
 
 
-install_requires = ["numpy"]
+install_requires = ["numpy"]  # TODO: Add OpenCV to requirements
 
 
 with open("README.md") as f:
