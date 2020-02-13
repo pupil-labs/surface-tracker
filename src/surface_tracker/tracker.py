@@ -35,3 +35,9 @@ class SurfaceTracker:
             markers=markers,
             camera_model=camera_model,
         )
+
+    def locate_visual_anchors(self, location: SurfaceLocation, camera_model) -> SurfaceVisualAnchors:
+        return SurfaceVisualAnchors._create_from_location(
+            location=location,
+            camera_model=camera_model,
+        )
