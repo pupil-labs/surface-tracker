@@ -1,7 +1,8 @@
 import typing as T
 
 
-def left_rotation(a, k):
+
+def left_rotation(a: list, k: int):
     """Rotate list to the left
     e.g.: [1, 2, 3, 4] -> [2, 3, 4, 1]
     """
@@ -11,7 +12,7 @@ def left_rotation(a, k):
     return a[rotations:] + a[:rotations]
 
 
-def right_rotation(a, k):
+def right_rotation(a: list, k: int):
     """Rotate list to the right
     e.g.: [1, 2, 3, 4] -> [4, 1, 2, 3]
     """
