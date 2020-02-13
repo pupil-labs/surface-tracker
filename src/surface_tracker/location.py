@@ -168,9 +168,9 @@ class SurfaceLocation(abc.ABC):
         # Validate points
 
         if len(points.shape) == 1 and points.shape[0] == 2:
-            return points
+            pass
         elif len(points.shape) == 2 and points.shape[1] == 2:
-            return points
+            pass
         else:
             raise ValueError(
                 f"Expected points to have shape (2,) or (N, 2), but got {points.shape}"
