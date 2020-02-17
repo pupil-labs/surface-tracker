@@ -23,7 +23,7 @@ class SurfaceVisualAnchors:
         top_indicator_corners.append(top_indicator_corners[0])
 
         perimeter_points_surface_space = np.array(perimeter_corners, dtype=np.float32)
-        perimeter_points_image_space = location.map_from_surface_to_image(
+        perimeter_points_image_space = location._map_from_surface_to_image(
             points=perimeter_points_surface_space,
             camera_model=camera_model,
             compensate_distortion=False,
@@ -32,7 +32,7 @@ class SurfaceVisualAnchors:
         top_indicator_points_in_surface_space = np.array(
             top_indicator_corners, dtype=np.float32
         )
-        top_indicator_points_in_image_space = location.map_from_surface_to_image(
+        top_indicator_points_in_image_space = location._map_from_surface_to_image(
             points=top_indicator_points_in_surface_space,
             camera_model=camera_model,
             compensate_distortion=False,

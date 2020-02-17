@@ -53,38 +53,48 @@ class Surface(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def registered_markers_by_uid_distorted(self) -> T.Mapping[MarkerId, Marker]:
+    def _registered_markers_by_uid_distorted(self) -> T.Mapping[MarkerId, Marker]:
+        raise NotImplementedError()
+
+    @_registered_markers_by_uid_distorted.setter
+    @abc.abstractmethod
+    def _registered_markers_by_uid_distorted(self, value: T.Mapping[MarkerId, Marker]):
         raise NotImplementedError()
 
     @property
     @abc.abstractmethod
-    def registered_markers_by_uid_undistorted(self) -> T.Mapping[MarkerId, Marker]:
+    def _registered_markers_by_uid_undistorted(self) -> T.Mapping[MarkerId, Marker]:
+        raise NotImplementedError()
+
+    @_registered_markers_by_uid_undistorted.setter
+    @abc.abstractmethod
+    def _registered_markers_by_uid_undistorted(self, value: T.Mapping[MarkerId, Marker]):
         raise NotImplementedError()
 
     @property
     def registered_marker_uids(self) -> T.Set[MarkerId]:
-        marker_uids_distorted = set(self.registered_markers_by_uid_distorted.keys())
-        marker_uids_undistorted = set(self.registered_markers_by_uid_undistorted.keys())
+        marker_uids_distorted = set(self._registered_markers_by_uid_distorted.keys())
+        marker_uids_undistorted = set(self._registered_markers_by_uid_undistorted.keys())
         marker_uids_diff = marker_uids_distorted.symmetric_difference(
             marker_uids_undistorted
         )
 
         for uid in marker_uids_diff:
             logger.debug(f"Removing inconsistently registered marker with UID: {uid}")
-            del self.registered_markers_by_uid_distorted[uid]
-            del self.registered_markers_by_uid_undistorted[uid]
+            del self._registered_markers_by_uid_distorted[uid]
+            del self._registered_markers_by_uid_undistorted[uid]
 
-        return set(self.registered_markers_by_uid_distorted.keys())
+        return set(self._registered_markers_by_uid_distorted.keys())
 
     ### Update
 
-    def add_marker(self, marker: Marker):
         raise NotImplementedError()
+    def _add_marker(self, marker_distorted: Marker, marker_undistorted: Marker):
 
-    def remove_marker(self, marker_uid: MarkerId):
         raise NotImplementedError()
+    def _remove_marker(self, marker_uid: MarkerId):
+    def _move_corner(self, corner: CornerId, new_position_in_surface_space_distorted: T.Tuple[float, float], new_position_in_surface_space_undistorted: T.Tuple[float, float]):
 
-    def move_corner(self, corner_uid: CornerId, new_position):
         # TODO: Type annotate new_position
         raise NotImplementedError()
 
@@ -115,8 +125,8 @@ class Surface(abc.ABC):
             return None
 
         markers = _check_markers_uniqueness(markers)
-        corners = CornerId.all_corners()
-        vertices = [m._vertices_in_image_space() for m in markers]
+        marker_vertices_order = CornerId.all_corners()
+        vertices = [m._vertices_in_image_space(order=marker_vertices_order) for m in markers]
 
         vertices_distorted = np.array(vertices, dtype=np.float32)
         vertices_distorted.shape = (-1, 2)
@@ -148,13 +158,13 @@ class Surface(abc.ABC):
             registered_markers_distorted[marker.uid] = _MarkerInSurfaceSpace(
                 uid=marker.uid,
                 vertices_in_surface_space_by_corner_id=dict(
-                    zip(corners, uv_dist.tolist())
+                    zip(marker_vertices_order, uv_dist.tolist())
                 ),
             )
             registered_markers_undistorted[marker.uid] = _MarkerInSurfaceSpace(
                 uid=marker.uid,
                 vertices_in_surface_space_by_corner_id=dict(
-                    zip(corners, uv_undist.tolist())
+                    zip(marker_vertices_order, uv_undist.tolist())
                 ),
             )
 
@@ -303,20 +313,28 @@ class _Surface_V2(Surface):
         return self.__name
 
     @property
-    def registered_markers_by_uid_distorted(self) -> T.Mapping[MarkerId, Marker]:
-        return self.__registered_markers_distorted
+    def _registered_markers_by_uid_distorted(self) -> T.Mapping[MarkerId, Marker]:
+        return self.__registered_markers_by_uid_distorted
+
+    @_registered_markers_by_uid_distorted.setter
+    def _registered_markers_by_uid_distorted(self, value: T.Mapping[MarkerId, Marker]):
+        self.__registered_markers_by_uid_distorted = value
 
     @property
-    def registered_markers_by_uid_undistorted(self) -> T.Mapping[MarkerId, Marker]:
-        return self.__registered_markers_undistorted
+    def _registered_markers_by_uid_undistorted(self) -> T.Mapping[MarkerId, Marker]:
+        return self.__registered_markers_by_uid_undistorted
+
+    @_registered_markers_by_uid_undistorted.setter
+    def _registered_markers_by_uid_undistorted(self, value: T.Mapping[MarkerId, Marker]):
+        self.__registered_markers_by_uid_undistorted = value
 
     def as_dict(self) -> dict:
-        registered_markers_distorted = self.__registered_markers_distorted
+        registered_markers_distorted = self._registered_markers_by_uid_distorted
         registered_markers_distorted = dict(
             (k, v.as_dict()) for k, v in registered_markers_distorted.items()
         )
 
-        registered_markers_undistorted = self.__registered_markers_undistorted
+        registered_markers_undistorted = self._registered_markers_by_uid_undistorted
         registered_markers_undistorted = dict(
             (k, v.as_dict()) for k, v in registered_markers_undistorted.items()
         )
@@ -368,5 +386,5 @@ class _Surface_V2(Surface):
     ):
         self.__uid = uid
         self.__name = name
-        self.__registered_markers_distorted = registered_markers_distorted
-        self.__registered_markers_undistorted = registered_markers_undistorted
+        self.__registered_markers_by_uid_distorted = registered_markers_distorted
+        self.__registered_markers_by_uid_undistorted = registered_markers_undistorted

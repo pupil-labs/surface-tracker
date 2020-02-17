@@ -74,10 +74,10 @@ class SurfaceLocation(abc.ABC):
 
         registered_marker_uids = set(surface.registered_marker_uids)
         registered_markers_by_uid_distorted = (
-            surface.registered_markers_by_uid_distorted
+            surface._registered_markers_by_uid_distorted
         )
         registered_markers_by_uid_undistorted = (
-            surface.registered_markers_by_uid_undistorted
+            surface._registered_markers_by_uid_undistorted
         )
 
         # Return None for an invalid surface definition
@@ -155,7 +155,7 @@ class SurfaceLocation(abc.ABC):
 
     ### Mapping
 
-    def map_from_image_to_surface(
+    def _map_from_image_to_surface(
         self,
         points: np.ndarray,
         camera_model: CameraModel,
@@ -172,7 +172,7 @@ class SurfaceLocation(abc.ABC):
             ),
         )
 
-    def map_from_surface_to_image(
+    def _map_from_surface_to_image(
         self,
         points: np.ndarray,
         camera_model: CameraModel,
