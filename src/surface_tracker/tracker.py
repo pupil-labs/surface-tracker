@@ -68,12 +68,27 @@ class SurfaceTracker:
     def add_marker_to_surface(
         self, surface: Surface, location: SurfaceLocation, marker: Marker
     ):
-        raise NotImplementedError()
+        marker_distorted = location._map_marker_from_image_to_surface(
+            marker=marker,
+            camera_model=self.__camera_model,
+            compensate_distortion=False,
+        )
+
+        marker_undistorted = location._map_marker_from_image_to_surface(
+            marker=marker,
+            camera_model=self.__camera_model,
+            compensate_distortion=True,
+        )
+
+        surface._add_marker(
+            marker_distorted=marker_distorted,
+            marker_undistorted=marker_undistorted,
+        )
 
     def remove_marker_from_surface(
         self, surface: Surface, location: SurfaceLocation, marker_uid: MarkerId
     ):
-        raise NotImplementedError()
+        surface._remove_marker(marker_uid=marker_uid)
 
     ### Locating a surface
 
