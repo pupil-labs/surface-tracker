@@ -88,11 +88,27 @@ class Surface(abc.ABC):
 
     ### Update
 
-        raise NotImplementedError()
     def _add_marker(self, marker_distorted: Marker, marker_undistorted: Marker):
 
-        raise NotImplementedError()
+        if not isinstance(marker_distorted, _MarkerInSurfaceSpace):
+            raise ValueError(f"Expected marker_distorted in surface space")
+
+        if not isinstance(marker_undistorted, _MarkerInSurfaceSpace):
+            raise ValueError(f"Expected marker_undistorted in surface space")
+
+        if marker_distorted.uid != marker_undistorted.uid:
+            raise ValueError(f"Expected marker marker_distorted UID to match marker_undistorted UID")
+
+        marker_uid = marker_distorted.uid
+        self._registered_markers_by_uid_distorted[marker_uid] = marker_distorted
+        self._registered_markers_by_uid_undistorted[marker_uid] = marker_undistorted
+
     def _remove_marker(self, marker_uid: MarkerId):
+        self._registered_markers_by_uid_distorted[marker_uid] = None
+        self._registered_markers_by_uid_undistorted[marker_uid] = None
+        del self._registered_markers_by_uid_distorted[marker_uid]
+        del self._registered_markers_by_uid_undistorted[marker_uid]
+
     def _move_corner(self, corner: CornerId, new_position_in_surface_space_distorted: T.Tuple[float, float], new_position_in_surface_space_undistorted: T.Tuple[float, float]):
 
         # TODO: Type annotate new_position
