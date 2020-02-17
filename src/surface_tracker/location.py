@@ -195,6 +195,66 @@ class SurfaceLocation(abc.ABC):
             ),
         )
 
+    def _map_marker_from_image_to_surface(
+        self,
+        marker: Marker,
+        camera_model: CameraModel,
+        compensate_distortion: bool = True,
+        transform_matrix=None,
+    ) -> Marker:
+
+        order = CornerId.all_corners()
+
+        vertices_in_image_space = marker._vertices_in_image_space(order=order)
+
+        vertices_in_image_space_numpy = np.asarray(vertices_in_image_space).reshape((4, 2))
+        vertices_in_surface_space_numpy = self._map_from_image_to_surface(
+            points=vertices_in_image_space_numpy,
+            camera_model=camera_model,
+            compensate_distortion=compensate_distortion,
+            transform_matrix=transform_matrix,
+        )
+
+        vertices_in_surface_space = vertices_in_surface_space_numpy.tolist()
+
+        assert len(order) == len(vertices_in_surface_space), "Sanity check"
+        mapping = dict(zip(order, vertices_in_surface_space))
+
+        return _MarkerInSurfaceSpace(
+            uid=marker.uid,
+            vertices_in_surface_space_by_corner_id=mapping
+        )
+
+    def _map_marker_from_surface_to_image(
+        self,
+        marker: Marker,
+        camera_model: CameraModel,
+        compensate_distortion: bool = True,
+        transform_matrix=None,
+    ) -> Marker:
+
+        order = CornerId.all_corners()
+
+        vertices_in_surface_space = marker._vertices_in_surface_space(order=order)
+
+        vertices_in_surface_space_numpy = np.asarray(vertices_in_surface_space).reshape((4, 2))
+        vertices_in_image_space_numpy = self._map_from_surface_to_image(
+            points=vertices_in_surface_space_numpy,
+            camera_model=camera_model,
+            compensate_distortion=compensate_distortion,
+            transform_matrix=transform_matrix,
+        )
+
+        vertices_in_image_space = vertices_in_image_space_numpy.tolist()
+
+        assert len(order) == len(vertices_in_image_space), "Sanity check"
+        mapping = dict(zip(order, vertices_in_image_space))
+
+        return _MarkerInImageSpace(
+            uid=marker.uid,
+            vertices_in_image_space_by_corner_id=mapping
+        )
+
     ### Serialize
 
     @abc.abstractmethod
