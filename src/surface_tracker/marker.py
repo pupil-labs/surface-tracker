@@ -20,10 +20,14 @@ class Marker(abc.ABC):
     def uid(self) -> MarkerId:
         raise NotImplementedError()
 
-    @abc.abstractmethod
     def vertices(self) -> T.List[tuple]:
         # TODO: Add option to explicitly define the order of the vertices list
-        # e.g.: marker.vertices_in_image_space(starting_with=CornerId.BOTTOM_RIGHT, clockwise=False)
+        # e.g.: marker.vertices(starting_with=CornerId.BOTTOM_RIGHT, clockwise=False)
+        order = CornerId.all_corners()
+        return self._vertices_in_order(order=order)
+
+    @abc.abstractmethod
+    def _vertices_in_order(self, order: T.List[CornerId]) -> T.List[tuple]:
         raise NotImplementedError()
 
     ### Factory
@@ -92,8 +96,8 @@ class _MarkerInImageSpace(Marker):
     def uid(self) -> MarkerId:
         return self.__uid
 
-    def vertices(self) -> T.List[tuple]:
-        return self._vertices_in_image_space()
+    def _vertices_in_order(self, order: T.List[CornerId]) -> T.List[tuple]:
+        return self._vertices_in_image_space(order=order)
 
     @staticmethod
     def from_dict(value: dict) -> "Marker":
@@ -131,12 +135,9 @@ class _MarkerInImageSpace(Marker):
             vertices_in_image_space_by_corner_id
         )
 
-    def _vertices_in_image_space(self) -> T.List[T.Tuple[int, int]]:
-        # TODO: Add option to explicitly define the order of the vertices list
-        # e.g.: marker.vertices_in_image_space(starting_with=CornerId.BOTTOM_RIGHT, clockwise=False)
-        corners = CornerId.all_corners()
+    def _vertices_in_image_space(self, order: T.List[CornerId]) -> T.List[T.Tuple[int, int]]:
         mapping = self.__vertices_in_image_space_by_corner_id
-        return [mapping[c] for c in corners]
+        return [mapping[c] for c in order]
 
 
 class _MarkerInSurfaceSpace(Marker):
@@ -144,8 +145,8 @@ class _MarkerInSurfaceSpace(Marker):
     def uid(self) -> MarkerId:
         return self.__uid
 
-    def vertices(self) -> T.List[tuple]:
-        return self._vertices_in_surface_space()
+    def _vertices_in_order(self, order: T.List[CornerId]) -> T.List[tuple]:
+        return self._vertices_in_surface_space(order=order)
 
     @staticmethod
     def from_dict(value: dict) -> "Marker":
@@ -186,9 +187,6 @@ class _MarkerInSurfaceSpace(Marker):
             vertices_in_surface_space_by_corner_id
         )
 
-    def _vertices_in_surface_space(self) -> T.List[T.Tuple[float, float]]:
-        # TODO: Add option to explicitly define the order of the vertices list
-        # e.g.: marker.vertices_in_image_space(starting_with=CornerId.BOTTOM_RIGHT, clockwise=False)
-        corners = CornerId.all_corners()
+    def _vertices_in_surface_space(self, order: T.List[CornerId]) -> T.List[T.Tuple[float, float]]:
         mapping = self.__vertices_in_surface_space_by_corner_id
-        return [mapping[c] for c in corners]
+        return [mapping[c] for c in order]
