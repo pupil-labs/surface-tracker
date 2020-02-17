@@ -111,8 +111,18 @@ class Surface(abc.ABC):
 
     def _move_corner(self, corner: CornerId, new_position_in_surface_space_distorted: T.Tuple[float, float], new_position_in_surface_space_undistorted: T.Tuple[float, float]):
 
-        # TODO: Type annotate new_position
-        raise NotImplementedError()
+        self._registered_markers_by_uid_distorted = self.__move_corner(
+            corner=corner,
+            registered_markers_by_uid=self._registered_markers_by_uid_distorted,
+            new_position_in_surface_space=new_position_in_surface_space_distorted,
+        )
+
+        self._registered_markers_by_uid_undistorted = self.__move_corner(
+            corner=corner,
+            registered_markers_by_uid=self._registered_markers_by_uid_undistorted,
+            new_position_in_surface_space=new_position_in_surface_space_undistorted,
+        )
+
 
     ### Serialize
 
@@ -194,6 +204,32 @@ class Surface(abc.ABC):
             registered_markers_distorted=registered_markers_distorted,
             registered_markers_undistorted=registered_markers_undistorted,
         )
+
+    ### Private
+
+    def __move_corner(
+        self,
+        corner: CornerId,
+        registered_markers_by_uid: T.Mapping[MarkerId, _MarkerInSurfaceSpace],
+        new_position_in_surface_space: T.Tuple[float, float],
+    ):
+        order = CornerId.all_corners()
+
+        old_corners = np.array([c.as_tuple() for c in order], dtype=np.float32)
+        new_corners = np.array([new_position_in_surface_space if c is corner else c.as_tuple() for c in order], dtype=np.float32)
+
+        transform = cv2.getPerspectiveTransform(new_corners, old_corners)
+
+        for marker_uid, marker in registered_markers_by_uid.items():
+            old_vertices = np.asarray(marker._vertices_in_surface_space(order=order), dtype=np.float32)
+            new_vertices = cv2.perspectiveTransform(old_vertices.reshape((-1, 1, 2)), transform).reshape((-1, 2))
+            mapping = dict(zip(order, new_vertices.tolist()))
+            registered_markers_by_uid[marker_uid] = _MarkerInSurfaceSpace(
+                uid=marker_uid,
+                vertices_in_surface_space_by_corner_id=mapping,
+            )
+
+        return registered_markers_by_uid
 
 
 def _check_markers_uniqueness(markers: T.List[Marker]) -> T.List[Marker]:
