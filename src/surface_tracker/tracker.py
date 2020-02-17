@@ -46,7 +46,24 @@ class SurfaceTracker:
         corner: CornerId,
         new_position: T.Tuple[int, int],
     ):
-        raise NotImplementedError()
+
+        new_position_in_surface_space_distorted = location._map_from_image_to_surface(
+            points=np.array([new_position], dtype=np.float32),
+            camera_model=self.__camera_model,
+            compensate_distortion=False,
+        )[0].tolist()
+
+        new_position_in_surface_space_undistorted = location._map_from_image_to_surface(
+            points=np.array([new_position], dtype=np.float32),
+            camera_model=self.__camera_model,
+            compensate_distortion=False,
+        )[0].tolist()
+
+        surface._move_corner(
+            corner=corner,
+            new_position_in_surface_space_distorted=new_position_in_surface_space_distorted,
+            new_position_in_surface_space_undistorted=new_position_in_surface_space_undistorted,
+        )
 
     def add_marker_to_surface(
         self, surface: Surface, location: SurfaceLocation, marker: Marker
