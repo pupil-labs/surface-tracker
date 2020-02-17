@@ -6,7 +6,8 @@ import numpy as np
 import cv2
 
 from .camera import CameraModel
-from .marker import Marker, MarkerId
+from .corner import CornerId
+from .marker import Marker, MarkerId, _MarkerInImageSpace, _MarkerInSurfaceSpace
 from .surface import Surface, SurfaceId
 
 
@@ -72,6 +73,9 @@ class SurfaceLocation(abc.ABC):
         surface: Surface, markers: T.List[Marker], camera_model: CameraModel
     ) -> "SurfaceLocation":
 
+        if surface is None:
+            raise ValueError("Surface is None")
+
         registered_marker_uids = set(surface.registered_marker_uids)
         registered_markers_by_uid_distorted = (
             surface._registered_markers_by_uid_distorted
@@ -107,9 +111,11 @@ class SurfaceLocation(abc.ABC):
         # Get the set of marker UIDs that are both visible and registered
         matching_marker_uids = set(visible_markers_by_uid.keys())
 
+        marker_vertices_order = CornerId.all_corners()
+
         visible_vertices_distorted = np.array(
             [
-                visible_markers_by_uid[uid]._vertices_in_image_space()
+                visible_markers_by_uid[uid]._vertices_in_image_space(order=marker_vertices_order)
                 for uid in matching_marker_uids
             ]
         )
@@ -122,7 +128,7 @@ class SurfaceLocation(abc.ABC):
 
         registered_vertices_distorted = np.array(
             [
-                registered_markers_by_uid_distorted[uid]._vertices_in_surface_space()
+                registered_markers_by_uid_distorted[uid]._vertices_in_surface_space(order=marker_vertices_order)
                 for uid in matching_marker_uids
             ]
         )
@@ -130,7 +136,7 @@ class SurfaceLocation(abc.ABC):
 
         registered_vertices_undistorted = np.array(
             [
-                registered_markers_by_uid_undistorted[uid]._vertices_in_surface_space()
+                registered_markers_by_uid_undistorted[uid]._vertices_in_surface_space(order=marker_vertices_order)
                 for uid in matching_marker_uids
             ]
         )
