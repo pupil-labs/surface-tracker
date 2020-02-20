@@ -1,6 +1,7 @@
 from .camera import CameraModel
 from .corner import CornerId
 from .gaze_on_surface import GazeOnSurface
+from .image_crop import SurfaceImageCrop
 from .location import SurfaceLocation
 from .marker import Marker, MarkerId
 from .surface import Surface, SurfaceId

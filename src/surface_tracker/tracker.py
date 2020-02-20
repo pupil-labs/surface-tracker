@@ -6,6 +6,7 @@ import numpy as np
 
 from .camera import CameraModel
 from .corner import CornerId
+from .image_crop import SurfaceImageCrop
 from .marker import Marker, MarkerId
 from .location import SurfaceLocation
 from .surface import Surface, SurfaceId
@@ -106,4 +107,18 @@ class SurfaceTracker:
     ) -> T.Optional[SurfaceVisualAnchors]:
         return SurfaceVisualAnchors._create_from_location(
             location=location, camera_model=self.__camera_model
+        )
+
+    def locate_surface_image_crop(
+        self,
+        surface: Surface,
+        location: SurfaceLocation,
+        width: T.Optional[int]=None,
+        height: T.Optional[int]=None,
+    ) -> SurfaceImageCrop:
+        return SurfaceImageCrop._create_image_crop(
+            location=location,
+            camera_model=self.__camera_model,
+            width=width,
+            height=height,
         )
