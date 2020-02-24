@@ -33,11 +33,28 @@ class SurfaceTracker:
     def surface_corner_position_in_image_space(
         self, surface: Surface, location: SurfaceLocation, corner: CornerId
     ) -> T.Tuple[int, int]:
-        return location._map_from_surface_to_image(
-            points=np.array([corner.as_tuple()], dtype=np.float32),
-            camera_model=self.__camera_model,
+        """Return the corner position in image space.
+        """
+        return self.surface_points_in_image_space(
+            surface=surface,
+            location=location,
+            points=[corner.as_tuple()],
             compensate_distortion=False,
-        )[0].tolist()
+        )[0]
+
+    def surface_points_in_image_space(
+        self, surface: Surface, location: SurfaceLocation, points: T.List[T.Tuple[float, float]], compensate_distortion: bool = False,
+    ) -> T.List[T.Tuple[int, int]]:
+        """Transform a list of points in surface space into a list of points in image space.
+        """
+        if len(points) == 0:
+            return []
+
+        return location._map_from_surface_to_image(
+            points=np.array(points, dtype=np.float32),
+            camera_model=self.__camera_model,
+            compensate_distortion=compensate_distortion,
+        ).tolist()
 
     ### Modifying a surface
 
