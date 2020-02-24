@@ -58,7 +58,7 @@ class SurfaceTracker:
         new_position_in_surface_space_undistorted = location._map_from_image_to_surface(
             points=np.array([new_position], dtype=np.float32),
             camera_model=self.__camera_model,
-            compensate_distortion=False,
+            compensate_distortion=True,
         )[0].tolist()
 
         surface._move_corner(
