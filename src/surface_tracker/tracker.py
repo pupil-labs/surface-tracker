@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 class SurfaceTracker:
     def __init__(self, camera_model: CameraModel):
         self.__camera_model = camera_model
+        self.__locations_tracker = _SurfaceTrackerWeakLocationStore()
+        self.__argument_validator = _SurfaceTrackerArgumentValidator()
 
     ### Creating a surface
 
@@ -179,3 +181,64 @@ class SurfaceTracker:
         )
 
         return (image_crop, heatmap)
+
+
+##### Private Helpers
+
+
+import weakref
+
+
+class _SurfaceTrackerWeakLocationStore:
+
+    def __init__(self):
+        self.__storage = {}
+
+    def track_location_for_surface(self, surface: Surface, location: SurfaceLocation):
+        weak_location = weakref.ref(location)
+        surface_locations = self.__storage.get(surface.uid, [])
+        surface_locations.append(weak_location)
+        self.__storage[surface.uid] = surface_locations
+
+    def mark_locations_as_stale_for_surface(self, surface: Surface):
+        # Get all locations that are still being used
+        surface_locations = self.__storage.get(surface.uid, [])
+        surface_locations = map(lambda l: l(), surface_locations)
+        surface_locations = filter(lambda l: l is not None, surface_locations)
+
+        # Invalidate all locations
+        for location in surface_locations:
+            location._mark_as_stale()
+
+        # Remove locations from tracking
+        self.__storage[surface.uid] = []
+
+
+class _SurfaceTrackerArgumentValidator:
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def validate_surface(surface: Surface):
+        """Validate the standalone `surface` argument
+        """
+
+        if not isinstance(surface, Surface):
+            raise ValueError(f"Expected an instance of Surface, but got \"{surface.__class__}\"")
+
+    @staticmethod
+    def validate_surface_and_location(surface: Surface, location: SurfaceLocation, ignore_location_staleness: bool):
+        """Validate the pair of `surface` and `location` arguments
+        """
+
+        _SurfaceTrackerArgumentValidator.validate_surface(surface=surface)
+
+        if not isinstance(location, SurfaceLocation):
+            raise ValueError(f"Expected an instance of SurfaceLocation, but got \"{location.__class__}\"")
+
+        if surface.uid != location.surface_uid:
+            raise ValueError(f"SurfaceId missmatch: location doesn't belong to surface")
+
+        if (not ignore_location_staleness) and location.is_stale:
+            raise ValueError(f"Stale location: the surface definition has changed; location must be recomputed")
