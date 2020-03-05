@@ -5,7 +5,6 @@ import numpy as np
 
 
 class CameraModel(abc.ABC):
-
     @property
     @abc.abstractmethod
     def resolution(self) -> T.Tuple[int, int]:

@@ -10,12 +10,22 @@ from .location import SurfaceLocation
 
 # https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
 class SurfaceImageCrop:
-
     @staticmethod
-    def _create_image_crop(location: SurfaceLocation, camera_model, width: T.Optional[int], height: T.Optional[int]):
-        surface_corners_in_surface_space = CornerId.all_corners(starting_with=CornerId.TOP_LEFT, clockwise=True)
-        surface_corners_in_surface_space = [c.as_tuple() for c in surface_corners_in_surface_space]
-        surface_corners_in_surface_space = np.array(surface_corners_in_surface_space, dtype=np.float32)
+    def _create_image_crop(
+        location: SurfaceLocation,
+        camera_model,
+        width: T.Optional[int],
+        height: T.Optional[int],
+    ):
+        surface_corners_in_surface_space = CornerId.all_corners(
+            starting_with=CornerId.TOP_LEFT, clockwise=True
+        )
+        surface_corners_in_surface_space = [
+            c.as_tuple() for c in surface_corners_in_surface_space
+        ]
+        surface_corners_in_surface_space = np.array(
+            surface_corners_in_surface_space, dtype=np.float32
+        )
 
         surface_corners_in_image_space = location._map_from_surface_to_image(
             points=surface_corners_in_surface_space,
@@ -24,25 +34,35 @@ class SurfaceImageCrop:
             transform_matrix=None,
         )
 
-        crop_size = SurfaceImageCrop.__calculate_crop_size(*surface_corners_in_image_space.tolist(), width=width, height=height)
+        crop_size = SurfaceImageCrop.__calculate_crop_size(
+            *surface_corners_in_image_space.tolist(), width=width, height=height
+        )
         crop_w, crop_h = crop_size
 
         crop_corners_in_image_space = [
             [0, 0],
             [crop_w - 1, 0],
             [crop_w - 1, crop_h - 1],
-            [0, crop_h - 1]
+            [0, crop_h - 1],
         ]
-        crop_corners_in_image_space = np.array(crop_corners_in_image_space, dtype=np.float32)
+        crop_corners_in_image_space = np.array(
+            crop_corners_in_image_space, dtype=np.float32
+        )
 
-        perspective_transform = cv2.getPerspectiveTransform(surface_corners_in_image_space, crop_corners_in_image_space)
+        perspective_transform = cv2.getPerspectiveTransform(
+            surface_corners_in_image_space, crop_corners_in_image_space
+        )
 
         return SurfaceImageCrop(
             crop_size_in_image_space=crop_size,
             perspective_transform=perspective_transform,
         )
 
-    def __init__(self, crop_size_in_image_space: T.Tuple[int, int], perspective_transform: np.ndarray):
+    def __init__(
+        self,
+        crop_size_in_image_space: T.Tuple[int, int],
+        perspective_transform: np.ndarray,
+    ):
         self.__crop_size_in_image_space = crop_size_in_image_space
         self.__perspective_transform = perspective_transform
 
@@ -51,8 +71,12 @@ class SurfaceImageCrop:
         return self.__crop_size_in_image_space
 
     def apply_to_image(self, image: np.ndarray) -> np.ndarray:
-        surface_image = cv2.warpPerspective(image, self.__perspective_transform, self.__crop_size_in_image_space)
-        surface_image = self.__flip_image_vertically(surface_image) #Flip image vertically #FIXME: ???
+        surface_image = cv2.warpPerspective(
+            image, self.__perspective_transform, self.__crop_size_in_image_space
+        )
+        surface_image = self.__flip_image_vertically(
+            surface_image
+        )  # Flip image vertically #FIXME: ???
         return surface_image
 
     @staticmethod
@@ -60,11 +84,18 @@ class SurfaceImageCrop:
         h = image.shape[0]
         flipped = np.zeros(image.shape, np.uint8)
         for i in range(h):
-            flipped[i,:]=image[h-i-1,:]
+            flipped[i, :] = image[h - i - 1, :]
         return flipped
 
     @staticmethod
-    def __calculate_crop_size(tl: int, tr: int, br: int, bl: int, width: T.Optional[int], height: T.Optional[int]) -> T.Tuple[int, int]:
+    def __calculate_crop_size(
+        tl: int,
+        tr: int,
+        br: int,
+        bl: int,
+        width: T.Optional[int],
+        height: T.Optional[int],
+    ) -> T.Tuple[int, int]:
 
         # compute the width of the new image, which will be the
         # maximum distance between bottom-right and bottom-left
@@ -87,7 +118,7 @@ class SurfaceImageCrop:
         # order
 
         if width is not None and height is not None:
-            raise ValueError(f"Expected only \"width\" OR \"height\" to be supplied")
+            raise ValueError(f'Expected only "width" OR "height" to be supplied')
 
         if width is not None:
             ratio = max_width / width

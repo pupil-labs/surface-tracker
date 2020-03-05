@@ -10,9 +10,9 @@ from .surface import Surface, SurfaceId
 
 
 class SurfaceHeatmap:
-
     class ColorFormat(enum.Enum):
         RGB = enum.auto()
+
         @property
         def channel_count(self) -> int:
             if self == SurfaceHeatmap.ColorFormat.RGB:
@@ -21,11 +21,11 @@ class SurfaceHeatmap:
 
     @staticmethod
     def _create_surface_heatmap(
-        points_in_image_space: T.List[T.Tuple[int, int]], location: SurfaceLocation, camera_model: CameraModel
+        points_in_image_space: T.List[T.Tuple[int, int]],
+        location: SurfaceLocation,
+        camera_model: CameraModel,
     ):
-        surface_heatmap = SurfaceHeatmap(
-            surface_uid=location.surface_uid
-        )
+        surface_heatmap = SurfaceHeatmap(surface_uid=location.surface_uid)
         surface_heatmap._add_points(
             points_in_image_space=points_in_image_space,
             location=location,
@@ -38,21 +38,37 @@ class SurfaceHeatmap:
         self.__points_in_surface_space_numpy = np.zeros((0, 2), dtype=np.float32)
         self._invalidate_cached_computations()
 
-    def _add_points(self, points_in_image_space: T.List[T.Tuple[int, int]], location: SurfaceLocation, camera_model: CameraModel):
-        points_in_image_space_numpy = np.asarray(points_in_image_space, dtype=np.float32)
+    def _add_points(
+        self,
+        points_in_image_space: T.List[T.Tuple[int, int]],
+        location: SurfaceLocation,
+        camera_model: CameraModel,
+    ):
+        points_in_image_space_numpy = np.asarray(
+            points_in_image_space, dtype=np.float32
+        )
         new_points_in_surface_space_numpy = location._map_from_image_to_surface(
             points=np.asarray(points_in_image_space_numpy, dtype=np.float32),
             camera_model=camera_model,
             compensate_distortion=True,
         )
-        self.__points_in_surface_space_numpy = np.concatenate((self.__points_in_surface_space_numpy, new_points_in_surface_space_numpy), axis=0)
+        self.__points_in_surface_space_numpy = np.concatenate(
+            (self.__points_in_surface_space_numpy, new_points_in_surface_space_numpy),
+            axis=0,
+        )
 
-    def image(self, size: T.Tuple[int, int], color_format: T.Optional["SurfaceHeatmap.ColorFormat"] = None) -> np.ndarray:
+    def image(
+        self,
+        size: T.Tuple[int, int],
+        color_format: T.Optional["SurfaceHeatmap.ColorFormat"] = None,
+    ) -> np.ndarray:
 
         if color_format is None:
             color_format = SurfaceHeatmap.ColorFormat.RGB
         elif not isinstance(color_format, SurfaceHeatmap.ColorFormat):
-            raise ValueError(f"color_format must be an instance of SurfaceHeatmap.ColorFormat")
+            raise ValueError(
+                f"color_format must be an instance of SurfaceHeatmap.ColorFormat"
+            )
 
         cache_key = (size, color_format)
         heatmap_resolution = 31
@@ -92,7 +108,7 @@ class SurfaceHeatmap:
                 heatmap[:, :, 1] = histogram[:, :, 1]  # green
                 heatmap[:, :, 2] = histogram[:, :, 0]  # blue
             else:
-                raise ValueError(f"Unsupported color_format: \"{color_format}\"")
+                raise ValueError(f'Unsupported color_format: "{color_format}"')
 
             heatmap = cv2.resize(heatmap, dsize=size, interpolation=cv2.INTER_CUBIC)
 

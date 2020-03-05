@@ -135,7 +135,9 @@ class _MarkerInImageSpace(Marker):
             vertices_in_image_space_by_corner_id
         )
 
-    def _vertices_in_image_space(self, order: T.List[CornerId]) -> T.List[T.Tuple[int, int]]:
+    def _vertices_in_image_space(
+        self, order: T.List[CornerId]
+    ) -> T.List[T.Tuple[int, int]]:
         mapping = self.__vertices_in_image_space_by_corner_id
         return [mapping[c] for c in order]
 
@@ -187,6 +189,8 @@ class _MarkerInSurfaceSpace(Marker):
             vertices_in_surface_space_by_corner_id
         )
 
-    def _vertices_in_surface_space(self, order: T.List[CornerId]) -> T.List[T.Tuple[float, float]]:
+    def _vertices_in_surface_space(
+        self, order: T.List[CornerId]
+    ) -> T.List[T.Tuple[float, float]]:
         mapping = self.__vertices_in_surface_space_by_corner_id
         return [mapping[c] for c in order]

@@ -120,7 +120,9 @@ class SurfaceLocation(abc.ABC):
 
         visible_vertices_distorted = np.array(
             [
-                visible_markers_by_uid[uid]._vertices_in_image_space(order=marker_vertices_order)
+                visible_markers_by_uid[uid]._vertices_in_image_space(
+                    order=marker_vertices_order
+                )
                 for uid in matching_marker_uids
             ]
         )
@@ -133,7 +135,9 @@ class SurfaceLocation(abc.ABC):
 
         registered_vertices_distorted = np.array(
             [
-                registered_markers_by_uid_distorted[uid]._vertices_in_surface_space(order=marker_vertices_order)
+                registered_markers_by_uid_distorted[uid]._vertices_in_surface_space(
+                    order=marker_vertices_order
+                )
                 for uid in matching_marker_uids
             ]
         )
@@ -141,17 +145,25 @@ class SurfaceLocation(abc.ABC):
 
         registered_vertices_undistorted = np.array(
             [
-                registered_markers_by_uid_undistorted[uid]._vertices_in_surface_space(order=marker_vertices_order)
+                registered_markers_by_uid_undistorted[uid]._vertices_in_surface_space(
+                    order=marker_vertices_order
+                )
                 for uid in matching_marker_uids
             ]
         )
         registered_vertices_undistorted.shape = (-1, 2)
 
-        transform_matrix_from_image_to_surface_distorted, transform_matrix_from_surface_to_image_distorted = _find_homographies(
+        (
+            transform_matrix_from_image_to_surface_distorted,
+            transform_matrix_from_surface_to_image_distorted,
+        ) = _find_homographies(
             registered_vertices_distorted, visible_vertices_distorted
         )
 
-        transform_matrix_from_image_to_surface_undistorted, transform_matrix_from_surface_to_image_undistorted = _find_homographies(
+        (
+            transform_matrix_from_image_to_surface_undistorted,
+            transform_matrix_from_surface_to_image_undistorted,
+        ) = _find_homographies(
             registered_vertices_undistorted, visible_vertices_undistorted
         )
 
@@ -212,7 +224,9 @@ class SurfaceLocation(abc.ABC):
 
         vertices_in_image_space = marker._vertices_in_image_space(order=order)
 
-        vertices_in_image_space_numpy = np.asarray(vertices_in_image_space).reshape((4, 2))
+        vertices_in_image_space_numpy = np.asarray(vertices_in_image_space).reshape(
+            (4, 2)
+        )
         vertices_in_surface_space_numpy = self._map_from_image_to_surface(
             points=vertices_in_image_space_numpy,
             camera_model=camera_model,
@@ -226,8 +240,7 @@ class SurfaceLocation(abc.ABC):
         mapping = dict(zip(order, vertices_in_surface_space))
 
         return _MarkerInSurfaceSpace(
-            uid=marker.uid,
-            vertices_in_surface_space_by_corner_id=mapping
+            uid=marker.uid, vertices_in_surface_space_by_corner_id=mapping
         )
 
     def _map_marker_from_surface_to_image(
@@ -242,7 +255,9 @@ class SurfaceLocation(abc.ABC):
 
         vertices_in_surface_space = marker._vertices_in_surface_space(order=order)
 
-        vertices_in_surface_space_numpy = np.asarray(vertices_in_surface_space).reshape((4, 2))
+        vertices_in_surface_space_numpy = np.asarray(vertices_in_surface_space).reshape(
+            (4, 2)
+        )
         vertices_in_image_space_numpy = self._map_from_surface_to_image(
             points=vertices_in_surface_space_numpy,
             camera_model=camera_model,
@@ -256,8 +271,7 @@ class SurfaceLocation(abc.ABC):
         mapping = dict(zip(order, vertices_in_image_space))
 
         return _MarkerInImageSpace(
-            uid=marker.uid,
-            vertices_in_image_space_by_corner_id=mapping
+            uid=marker.uid, vertices_in_image_space_by_corner_id=mapping
         )
 
     ### Serialize

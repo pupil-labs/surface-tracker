@@ -68,13 +68,17 @@ class Surface(abc.ABC):
 
     @_registered_markers_by_uid_undistorted.setter
     @abc.abstractmethod
-    def _registered_markers_by_uid_undistorted(self, value: T.Mapping[MarkerId, Marker]):
+    def _registered_markers_by_uid_undistorted(
+        self, value: T.Mapping[MarkerId, Marker]
+    ):
         raise NotImplementedError()
 
     @property
     def registered_marker_uids(self) -> T.Set[MarkerId]:
         marker_uids_distorted = set(self._registered_markers_by_uid_distorted.keys())
-        marker_uids_undistorted = set(self._registered_markers_by_uid_undistorted.keys())
+        marker_uids_undistorted = set(
+            self._registered_markers_by_uid_undistorted.keys()
+        )
         marker_uids_diff = marker_uids_distorted.symmetric_difference(
             marker_uids_undistorted
         )
@@ -97,7 +101,9 @@ class Surface(abc.ABC):
             raise ValueError(f"Expected marker_undistorted in surface space")
 
         if marker_distorted.uid != marker_undistorted.uid:
-            raise ValueError(f"Expected marker marker_distorted UID to match marker_undistorted UID")
+            raise ValueError(
+                f"Expected marker marker_distorted UID to match marker_undistorted UID"
+            )
 
         marker_uid = marker_distorted.uid
         self._registered_markers_by_uid_distorted[marker_uid] = marker_distorted
@@ -109,7 +115,12 @@ class Surface(abc.ABC):
         del self._registered_markers_by_uid_distorted[marker_uid]
         del self._registered_markers_by_uid_undistorted[marker_uid]
 
-    def _move_corner(self, corner: CornerId, new_position_in_surface_space_distorted: T.Tuple[float, float], new_position_in_surface_space_undistorted: T.Tuple[float, float]):
+    def _move_corner(
+        self,
+        corner: CornerId,
+        new_position_in_surface_space_distorted: T.Tuple[float, float],
+        new_position_in_surface_space_undistorted: T.Tuple[float, float],
+    ):
 
         self._registered_markers_by_uid_distorted = self.__move_corner(
             corner=corner,
@@ -122,7 +133,6 @@ class Surface(abc.ABC):
             registered_markers_by_uid=self._registered_markers_by_uid_undistorted,
             new_position_in_surface_space=new_position_in_surface_space_undistorted,
         )
-
 
     ### Serialize
 
@@ -152,7 +162,9 @@ class Surface(abc.ABC):
 
         markers = _check_markers_uniqueness(markers)
         marker_vertices_order = CornerId.all_corners()
-        vertices = [m._vertices_in_image_space(order=marker_vertices_order) for m in markers]
+        vertices = [
+            m._vertices_in_image_space(order=marker_vertices_order) for m in markers
+        ]
 
         vertices_distorted = np.array(vertices, dtype=np.float32)
         vertices_distorted.shape = (-1, 2)
@@ -216,17 +228,26 @@ class Surface(abc.ABC):
         order = CornerId.all_corners()
 
         old_corners = np.array([c.as_tuple() for c in order], dtype=np.float32)
-        new_corners = np.array([new_position_in_surface_space if c is corner else c.as_tuple() for c in order], dtype=np.float32)
+        new_corners = np.array(
+            [
+                new_position_in_surface_space if c is corner else c.as_tuple()
+                for c in order
+            ],
+            dtype=np.float32,
+        )
 
         transform = cv2.getPerspectiveTransform(new_corners, old_corners)
 
         for marker_uid, marker in registered_markers_by_uid.items():
-            old_vertices = np.asarray(marker._vertices_in_surface_space(order=order), dtype=np.float32)
-            new_vertices = cv2.perspectiveTransform(old_vertices.reshape((-1, 1, 2)), transform).reshape((-1, 2))
+            old_vertices = np.asarray(
+                marker._vertices_in_surface_space(order=order), dtype=np.float32
+            )
+            new_vertices = cv2.perspectiveTransform(
+                old_vertices.reshape((-1, 1, 2)), transform
+            ).reshape((-1, 2))
             mapping = dict(zip(order, new_vertices.tolist()))
             registered_markers_by_uid[marker_uid] = _MarkerInSurfaceSpace(
-                uid=marker_uid,
-                vertices_in_surface_space_by_corner_id=mapping,
+                uid=marker_uid, vertices_in_surface_space_by_corner_id=mapping,
             )
 
         return registered_markers_by_uid
@@ -377,7 +398,9 @@ class _Surface_V2(Surface):
         return self.__registered_markers_by_uid_undistorted
 
     @_registered_markers_by_uid_undistorted.setter
-    def _registered_markers_by_uid_undistorted(self, value: T.Mapping[MarkerId, Marker]):
+    def _registered_markers_by_uid_undistorted(
+        self, value: T.Mapping[MarkerId, Marker]
+    ):
         self.__registered_markers_by_uid_undistorted = value
 
     def as_dict(self) -> dict:
