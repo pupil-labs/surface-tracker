@@ -65,31 +65,39 @@ class SurfaceTracker:
 
     ### Modifying a surface
 
-    def move_surface_corner_position_in_image_space(
+    def move_surface_corner_positions_in_image_space(
         self,
         surface: Surface,
         location: SurfaceLocation,
-        corner: CornerId,
-        new_position: T.Tuple[int, int],
+        new_positions: T.Mapping[CornerId, T.Tuple[int, int]],
     ):
+        if len(new_positions) == 0:
+            return
 
-        new_position_in_surface_space_distorted = location._map_from_image_to_surface(
-            points=np.array([new_position], dtype=np.float32),
+        ordered_corners = list(new_positions.keys())
+        ordered_positions = [new_positions[corner] for corner in ordered_corners]
+
+        ordered_position_in_surface_space_distorted = location._map_from_image_to_surface(
+            points=np.array(ordered_positions, dtype=np.float32),
             camera_model=self.__camera_model,
             compensate_distortion=False,
-        )[0].tolist()
+        ).tolist()
 
-        new_position_in_surface_space_undistorted = location._map_from_image_to_surface(
-            points=np.array([new_position], dtype=np.float32),
+        ordered_position_in_surface_space_undistorted = location._map_from_image_to_surface(
+            points=np.array(ordered_positions, dtype=np.float32),
             camera_model=self.__camera_model,
             compensate_distortion=True,
-        )[0].tolist()
+        ).tolist()
 
-        surface._move_corner(
-            corner=corner,
-            new_position_in_surface_space_distorted=new_position_in_surface_space_distorted,
-            new_position_in_surface_space_undistorted=new_position_in_surface_space_undistorted,
-        )
+        corner_updates = zip(ordered_corners, ordered_position_in_surface_space_distorted, ordered_position_in_surface_space_undistorted)
+
+        for (corner, new_distorted, new_undistorted) in corner_updates:
+            # TODO: Provide Surface API for moving multiple corners in one call
+            surface._move_corner(
+                corner=corner,
+                new_position_in_surface_space_distorted=new_distorted,
+                new_position_in_surface_space_undistorted=new_undistorted,
+            )
 
     def add_marker_to_surface(
         self, surface: Surface, location: SurfaceLocation, marker: Marker
