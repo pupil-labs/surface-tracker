@@ -26,6 +26,9 @@ class SurfaceTracker:
     ### Creating a surface
 
     def define_surface(self, name: str, markers: T.List[Marker]) -> T.Optional[Surface]:
+        """
+        """
+
         return Surface._create_surface_from_markers(
             name=name, markers=markers, camera_model=self.__camera_model
         )
@@ -37,6 +40,10 @@ class SurfaceTracker:
     ) -> T.Mapping[CornerId, T.Tuple[int, int]]:
         """Return the corner positions in image space.
         """
+
+        # Validate the surface definition and the surface location arguments
+        self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=False)
+
         if len(corners) == 0:
             return {}
 
@@ -56,6 +63,10 @@ class SurfaceTracker:
     ) -> T.List[T.Tuple[int, int]]:
         """Transform a list of points in surface space into a list of points in image space.
         """
+
+        # Validate the surface definition and the surface location arguments
+        self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=False)
+
         if len(points) == 0:
             return []
 
@@ -72,7 +83,14 @@ class SurfaceTracker:
         surface: Surface,
         location: SurfaceLocation,
         new_positions: T.Mapping[CornerId, T.Tuple[int, int]],
+        ignore_location_staleness: bool = False,
     ):
+        """
+        """
+
+        # Validate the surface definition and the surface location argumentse
+        self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=ignore_location_staleness)
+
         if len(new_positions) == 0:
             return
 
@@ -110,6 +128,9 @@ class SurfaceTracker:
         # Validate the surface definition and the surface location argumentse
         self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=ignore_location_staleness)
 
+        if len(markers) == 0:
+            return
+
         # Since this action mutates the surface definition, mark previously computed locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
@@ -144,6 +165,13 @@ class SurfaceTracker:
         # Validate the surface definition and the surface location arguments
         self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=ignore_location_staleness)
 
+        if len(marker_uids) == 0:
+            return
+
+        # TODO: Check for markers uniqueness
+
+        # TODO: Check markers are not already part of the surface definition
+
         for marker_uid in marker_uids:
             surface._remove_marker(marker_uid=marker_uid)
 
@@ -154,13 +182,25 @@ class SurfaceTracker:
     ) -> T.Optional[SurfaceLocation]:
         """Computes a SurfaceLocation based on a list of visible markers
         """
-        return SurfaceLocation._create_location_from_markers(
+
+        # Validate the surface definition
+        self.__argument_validator.validate_surface(surface=surface)
+
+        location = SurfaceLocation._create_location_from_markers(
             surface=surface, markers=markers, camera_model=self.__camera_model
         )
+
+        return location
 
     def locate_surface_visual_anchors(
         self, surface: Surface, location: SurfaceLocation
     ) -> T.Optional[SurfaceVisualAnchors]:
+        """
+        """
+
+        # Validate the surface definition and the surface location arguments
+        self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=False)
+
         return SurfaceVisualAnchors._create_from_location(
             location=location, camera_model=self.__camera_model
         )
@@ -172,6 +212,16 @@ class SurfaceTracker:
         width: T.Optional[int]=None,
         height: T.Optional[int]=None,
     ) -> SurfaceImageCrop:
+        """
+        """
+
+        # Validate the surface definition and the surface location arguments
+        self.__argument_validator.validate_surface_and_location(
+            surface=surface,
+            location=location,
+            ignore_location_staleness=False,
+        )
+
         return SurfaceImageCrop._create_image_crop(
             location=location,
             camera_model=self.__camera_model,
@@ -187,6 +237,11 @@ class SurfaceTracker:
         width: T.Optional[int]=None,
         height: T.Optional[int]=None,
     ) -> (SurfaceImageCrop, SurfaceHeatmap):
+        """
+        """
+
+        # Validate the surface definition and the surface location arguments
+        self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=False)
 
         image_crop = self.locate_surface_image_crop(
             surface=surface,
