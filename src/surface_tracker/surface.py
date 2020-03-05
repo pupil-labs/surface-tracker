@@ -408,13 +408,13 @@ class _Surface_V2(Surface):
                 expected_version == actual_version
             ), f"Surface version missmatch; expected {expected_version}, but got {actual_version}"
 
-            registered_markers_distorted = version["registered_markers_distorted"]
+            registered_markers_distorted = value["registered_markers_distorted"]
             registered_markers_distorted = dict(
                 (k, Marker.from_dict(v))
                 for k, v in registered_markers_distorted.items()
             )
 
-            registered_markers_undistorted = version["registered_markers_undistorted"]
+            registered_markers_undistorted = value["registered_markers_undistorted"]
             registered_markers_undistorted = dict(
                 (k, Marker.from_dict(v))
                 for k, v in registered_markers_undistorted.items()
