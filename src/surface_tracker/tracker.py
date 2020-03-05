@@ -30,17 +30,24 @@ class SurfaceTracker:
 
     ### Inspecting a surface
 
-    def surface_corner_position_in_image_space(
-        self, surface: Surface, location: SurfaceLocation, corner: CornerId
-    ) -> T.Tuple[int, int]:
-        """Return the corner position in image space.
+    def surface_corner_positions_in_image_space(
+        self, surface: Surface, location: SurfaceLocation, corners: T.List[CornerId]
+    ) -> T.Mapping[CornerId, T.Tuple[int, int]]:
+        """Return the corner positions in image space.
         """
-        return self.surface_points_in_image_space(
+        if len(corners) == 0:
+            return {}
+
+        positions = self.surface_points_in_image_space(
             surface=surface,
             location=location,
-            points=[corner.as_tuple()],
+            points=[corner.as_tuple() for corner in corners],
             compensate_distortion=False,
-        )[0]
+        )
+
+        assert len(corners) == len(positions)  # sanity check
+
+        return dict(zip(corners, positions))
 
     def surface_points_in_image_space(
         self, surface: Surface, location: SurfaceLocation, points: T.List[T.Tuple[float, float]], compensate_distortion: bool = False,
