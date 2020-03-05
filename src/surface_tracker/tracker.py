@@ -94,6 +94,9 @@ class SurfaceTracker:
         if len(new_positions) == 0:
             return
 
+        # Since this action mutates the surface definition, mark previously computed locations as stale
+        self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
+
         ordered_corners = list(new_positions.keys())
         ordered_positions = [new_positions[corner] for corner in ordered_corners]
 
@@ -168,6 +171,9 @@ class SurfaceTracker:
         if len(marker_uids) == 0:
             return
 
+        # Since this action mutates the surface definition, mark previously computed locations as stale
+        self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
+
         # TODO: Check for markers uniqueness
 
         # TODO: Check markers are not already part of the surface definition
@@ -189,6 +195,10 @@ class SurfaceTracker:
         location = SurfaceLocation._create_location_from_markers(
             surface=surface, markers=markers, camera_model=self.__camera_model
         )
+
+        if location is not None:
+            # Track the created location to invalidate it if the surface is mutated later
+            self.__locations_tracker.track_location_for_surface(surface=surface, location=location)
 
         return location
 
