@@ -131,15 +131,21 @@ class SurfaceTracker:
         # Validate the surface definition and the surface location argumentse
         self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=ignore_location_staleness)
 
+        # Ensure marker uniqueness
+        marker_uids = set(m.uid for m in markers)
+
+        # Ensure only markers that are not part of the definition will be added
+        marker_uids = marker_uids.difference(surface.registered_marker_uids)
+
+        # Filter out unused markers
+        markers = [m for m in markers if m.uid in marker_uids]
+
         if len(markers) == 0:
+            # If there are no markers to add, return without invalidating the locations
             return
 
         # Since this action mutates the surface definition, mark previously computed locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
-
-        # TODO: Check for markers uniqueness
-
-        # TODO: Check markers are not already part of the surface definition
 
         for marker in markers:
             marker_distorted = location._map_marker_from_image_to_surface(
@@ -168,15 +174,18 @@ class SurfaceTracker:
         # Validate the surface definition and the surface location arguments
         self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=ignore_location_staleness)
 
+        # Ensure marker uniqueness
+        marker_uids = set(marker_uids)
+
+        # Ensure only markers that are part of the definition will be removed
+        marker_uids = marker_uids.intersection(surface.registered_marker_uids)
+
         if len(marker_uids) == 0:
+            # If there are no markers to remove, return without invalidating the locations
             return
 
         # Since this action mutates the surface definition, mark previously computed locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
-
-        # TODO: Check for markers uniqueness
-
-        # TODO: Check markers are not already part of the surface definition
 
         for marker_uid in marker_uids:
             surface._remove_marker(marker_uid=marker_uid)
