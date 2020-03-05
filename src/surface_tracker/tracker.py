@@ -101,25 +101,39 @@ class SurfaceTracker:
                 new_position_in_surface_space_undistorted=new_undistorted,
             )
 
-    def add_marker_to_surface(
-        self, surface: Surface, location: SurfaceLocation, marker: Marker
+    def add_markers_to_surface(
+        self, surface: Surface, location: SurfaceLocation, markers: T.List[Marker], ignore_location_staleness: bool = False
     ):
-        marker_distorted = location._map_marker_from_image_to_surface(
-            marker=marker,
-            camera_model=self.__camera_model,
-            compensate_distortion=False,
-        )
+        """
+        """
 
-        marker_undistorted = location._map_marker_from_image_to_surface(
-            marker=marker,
-            camera_model=self.__camera_model,
-            compensate_distortion=True,
-        )
+        # Validate the surface definition and the surface location argumentse
+        self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=ignore_location_staleness)
 
-        surface._add_marker(
-            marker_distorted=marker_distorted,
-            marker_undistorted=marker_undistorted,
-        )
+        # Since this action mutates the surface definition, mark previously computed locations as stale
+        self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
+
+        # TODO: Check for markers uniqueness
+
+        # TODO: Check markers are not already part of the surface definition
+
+        for marker in markers:
+            marker_distorted = location._map_marker_from_image_to_surface(
+                marker=marker,
+                camera_model=self.__camera_model,
+                compensate_distortion=False,
+            )
+
+            marker_undistorted = location._map_marker_from_image_to_surface(
+                marker=marker,
+                camera_model=self.__camera_model,
+                compensate_distortion=True,
+            )
+
+            surface._add_marker(
+                marker_distorted=marker_distorted,
+                marker_undistorted=marker_undistorted,
+            )
 
     def remove_marker_from_surface(
         self, surface: Surface, location: SurfaceLocation, marker_uid: MarkerId
