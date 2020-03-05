@@ -135,10 +135,17 @@ class SurfaceTracker:
                 marker_undistorted=marker_undistorted,
             )
 
-    def remove_marker_from_surface(
-        self, surface: Surface, location: SurfaceLocation, marker_uid: MarkerId
+    def remove_markers_from_surface(
+        self, surface: Surface, location: SurfaceLocation, marker_uids: T.List[MarkerId], ignore_location_staleness: bool = False
     ):
-        surface._remove_marker(marker_uid=marker_uid)
+        """
+        """
+
+        # Validate the surface definition and the surface location arguments
+        self.__argument_validator.validate_surface_and_location(surface=surface, location=location, ignore_location_staleness=ignore_location_staleness)
+
+        for marker_uid in marker_uids:
+            surface._remove_marker(marker_uid=marker_uid)
 
     ### Locating a surface
 
