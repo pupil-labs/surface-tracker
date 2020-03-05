@@ -43,6 +43,11 @@ class SurfaceLocation(abc.ABC):
 
     @property
     @abc.abstractmethod
+    def is_stale(self) -> bool:
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
     def number_of_markers_detected(self) -> int:
         raise NotImplementedError()
 
@@ -379,6 +384,10 @@ class _SurfaceLocation_v2(SurfaceLocation):
         return self.__surface_uid
 
     @property
+    def is_stale(self) -> bool:
+        return self.__is_stale
+
+    @property
     def number_of_markers_detected(self) -> int:
         return self.__number_of_markers_detected
 
@@ -407,6 +416,7 @@ class _SurfaceLocation_v2(SurfaceLocation):
         transform_matrix_from_image_to_surface_undistorted: np.ndarray,
         transform_matrix_from_surface_to_image_undistorted: np.ndarray,
     ):
+        self.__is_stale = False
         self.__surface_uid = surface_uid
         self.__number_of_markers_detected = number_of_markers_detected
         self.__transform_matrix_from_image_to_surface_distorted = (
@@ -421,6 +431,9 @@ class _SurfaceLocation_v2(SurfaceLocation):
         self.__transform_matrix_from_surface_to_image_undistorted = (
             transform_matrix_from_surface_to_image_undistorted
         )
+
+    def _mark_as_stale(self):
+        self.__is_stale = False
 
     def as_dict(self) -> dict:
         return {
