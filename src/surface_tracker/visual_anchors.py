@@ -12,7 +12,6 @@ import typing as T
 import numpy as np
 import cv2
 
-from .camera import CameraModel
 from .corner import CornerId
 from .location import SurfaceLocation
 from .surface import Surface, SurfaceId
@@ -21,7 +20,7 @@ from .surface import Surface, SurfaceId
 class SurfaceVisualAnchors:
     @staticmethod
     def _create_from_location(
-        location: SurfaceLocation, camera_model: CameraModel
+        location: SurfaceLocation,
     ) -> "SurfaceVisualAnchors":
 
         perimeter_corners = CornerId.all_corners()
@@ -34,8 +33,6 @@ class SurfaceVisualAnchors:
         perimeter_points_surface_space = np.array(perimeter_corners, dtype=np.float32)
         perimeter_points_image_space = location._map_from_surface_to_image(
             points=perimeter_points_surface_space,
-            camera_model=camera_model,
-            compensate_distortion=False,
         )
 
         top_indicator_points_in_surface_space = np.array(
@@ -43,8 +40,6 @@ class SurfaceVisualAnchors:
         )
         top_indicator_points_in_image_space = location._map_from_surface_to_image(
             points=top_indicator_points_in_surface_space,
-            camera_model=camera_model,
-            compensate_distortion=False,
         )
 
         title_anchor = perimeter_points_image_space.reshape((5, -1))[2]

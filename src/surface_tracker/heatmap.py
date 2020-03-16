@@ -13,7 +13,6 @@ import typing as T
 import numpy as np
 import cv2
 
-from .camera import CameraModel
 from .location import SurfaceLocation
 from .surface import Surface, SurfaceId
 
@@ -32,13 +31,11 @@ class SurfaceHeatmap:
     def _create_surface_heatmap(
         points_in_image_space: T.List[T.Tuple[int, int]],
         location: SurfaceLocation,
-        camera_model: CameraModel,
     ):
         surface_heatmap = SurfaceHeatmap(surface_uid=location.surface_uid)
         surface_heatmap._add_points(
             points_in_image_space=points_in_image_space,
             location=location,
-            camera_model=camera_model,
         )
         return surface_heatmap
 
@@ -51,15 +48,12 @@ class SurfaceHeatmap:
         self,
         points_in_image_space: T.List[T.Tuple[int, int]],
         location: SurfaceLocation,
-        camera_model: CameraModel,
     ):
         points_in_image_space_numpy = np.asarray(
             points_in_image_space, dtype=np.float32
         )
         new_points_in_surface_space_numpy = location._map_from_image_to_surface(
             points=np.asarray(points_in_image_space_numpy, dtype=np.float32),
-            camera_model=camera_model,
-            compensate_distortion=True,
         )
         self.__points_in_surface_space_numpy = np.concatenate(
             (self.__points_in_surface_space_numpy, new_points_in_surface_space_numpy),
