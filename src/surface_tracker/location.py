@@ -106,11 +106,8 @@ class SurfaceLocation(abc.ABC):
             if uid in registered_marker_uids
         }
 
-        # If the surface is defined by 1 marker, but it's missing - return
-        if len(registered_marker_uids) == 1 and len(visible_markers_by_uid) == 0:
-            return None
-        # If the surface is defined by 2 or more markers, but there are fewer than 2 markers visible - return
-        elif len(registered_marker_uids) >= 2 and len(visible_markers_by_uid) < 2:
+        # If no markers are visible - return
+        if len(visible_markers_by_uid) == 0:
             return None
 
         # Get the set of marker UIDs that are both visible and registered
