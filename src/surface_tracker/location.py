@@ -289,13 +289,24 @@ class SurfaceLocation(abc.ABC):
 
         shape = points.shape
         points.shape = (-1, 1, 2)
-        points = cv2.perspectiveTransform(points, transform_matrix)
+        points = _perspective_transform(points, transform_matrix)
         points.shape = shape
 
         return points
 
 
 ##### Helper functions
+
+
+def _perspective_transform(points, transform_matrix):
+    homogeneous_points = cv2.convertPointsToHomogeneous(points)
+    res = []
+    for p in homogeneous_points:
+        projected_point = np.dot(transform_matrix, p[0])
+        projected_point[2] = abs(projected_point[2])  # flip points with negative z
+        res.append(projected_point)
+
+    return cv2.convertPointsFromHomogeneous(np.asarray(res))
 
 
 def _find_homographies(points_A, points_B):
