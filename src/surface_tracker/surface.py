@@ -252,7 +252,7 @@ def _bounding_quadrangle(vertices: np.ndarray):
     # See: https://github.com/pupil-labs/pupil/issues/1544
     vertices = np.asarray(vertices, dtype=np.float32)
 
-    hull_points = cv2.convexHull(vertices, clockwise=True)
+    hull_points = cv2.convexHull(vertices, clockwise=False)
 
     # The convex hull of a list of markers must have at least 4 corners, since a
     # single marker already has 4 corners. If the convex hull has more than 4

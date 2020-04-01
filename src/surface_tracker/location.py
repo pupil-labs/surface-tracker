@@ -308,7 +308,7 @@ def is_clockwise_triangle(points):
     val = (float(p2[1] - p1[1]) * (p3[0] - p2[0])) - (
         float(p2[0] - p1[0]) * (p3[1] - p2[1])
     )
-    return val < 0
+    return val > 0
 
 
 def orientation_quadrupel(points, clockwise=True):
