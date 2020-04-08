@@ -327,8 +327,7 @@ def project_points_pos_z(homogeneous_points, transform_matrix):
     for p in homogeneous_points:
         projected_point = np.dot(transform_matrix, p[0])
         if projected_point[2] < 0:
-            projected_point[2] = min(
-                abs(projected_point[2]),
+            projected_point[2] = (
                 np.linalg.norm([projected_point[0], projected_point[1]]) / 32,
             )
         res.append(projected_point)
