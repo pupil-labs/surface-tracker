@@ -289,11 +289,10 @@ class SurfaceLocation(abc.ABC):
         # Perspective transform
 
         shape = points.shape
+        points.shape = (-1, 1, 2)
         if custom_transformation:
-            points.shape = (-1, 2)
             points = _perspective_transform(points, transform_matrix)
         else:
-            points.shape = (-1, 1, 2)
             points = cv2.perspectiveTransform(points, transform_matrix)
         points.shape = shape
 
@@ -305,8 +304,8 @@ class SurfaceLocation(abc.ABC):
 
 def is_clockwise_triangle(points):
     p1, p2, p3 = points
-    val = (float(p2[1] - p1[1]) * (p3[0] - p2[0])) - (
-        float(p2[0] - p1[0]) * (p3[1] - p2[1])
+    val = (float(p2[0][1] - p1[0][1]) * (p3[0][0] - p2[0][0])) - (
+        float(p2[0][0] - p1[0][0]) * (p3[0][1] - p2[0][1])
     )
     return val > 0
 
@@ -328,7 +327,7 @@ def project_points_pos_z(homogeneous_points, transform_matrix):
         projected_point = np.dot(transform_matrix, p[0])
         if projected_point[2] < 0:
             projected_point[2] = (
-                np.linalg.norm([projected_point[0], projected_point[1]]) / 32,
+                np.linalg.norm([projected_point[0], projected_point[1]]) / 32
             )
         res.append(projected_point)
     return res
@@ -338,12 +337,12 @@ def _perspective_transform(points, transform_matrix):
     homogeneous_points = cv2.convertPointsToHomogeneous(points)
 
     proj_unflipped = project_points_pos_z(homogeneous_points, transform_matrix)
-    orientation_unflipped = orientation_quadrupel(proj_unflipped, clockwise=True)
     points_unflipped = cv2.convertPointsFromHomogeneous(np.asarray(proj_unflipped))
+    orientation_unflipped = orientation_quadrupel(points_unflipped, clockwise=True)
 
     proj_flipped = project_points_pos_z(-homogeneous_points, transform_matrix)
-    orientation_flipped = orientation_quadrupel(proj_flipped, clockwise=True)
     points_flipped = cv2.convertPointsFromHomogeneous(np.asarray(proj_flipped))
+    orientation_flipped = orientation_quadrupel(points_flipped, clockwise=True)
 
     if orientation_unflipped and not orientation_flipped:
         return points_unflipped
