@@ -161,6 +161,7 @@ class SurfaceLocation(abc.ABC):
             transform_matrix=self.__image_to_surface_transform(
                 transform_matrix=transform_matrix,
             ),
+            custom_transformation=False,
         )
 
     def _map_from_surface_to_image(
@@ -173,6 +174,7 @@ class SurfaceLocation(abc.ABC):
             transform_matrix=self.__surface_to_image_transform(
                 transform_matrix=transform_matrix,
             ),
+            custom_transformation=True,
         )
 
     def _map_marker_from_image_to_surface(
@@ -268,8 +270,7 @@ class SurfaceLocation(abc.ABC):
 
     @staticmethod
     def __map_points(
-        points: np.ndarray,
-        transform_matrix: np.ndarray,
+        points: np.ndarray, transform_matrix: np.ndarray, custom_transformation=False
     ) -> np.ndarray:
 
         points = np.asarray(points)
@@ -289,13 +290,74 @@ class SurfaceLocation(abc.ABC):
 
         shape = points.shape
         points.shape = (-1, 1, 2)
-        points = cv2.perspectiveTransform(points, transform_matrix)
+        if custom_transformation:
+            points = _perspective_transform(points, transform_matrix)
+        else:
+            points = cv2.perspectiveTransform(points, transform_matrix)
         points.shape = shape
 
         return points
 
 
 ##### Helper functions
+
+
+def is_clockwise_triangle(points):
+    p1, p2, p3 = points
+    val = (float(p2[0][1] - p1[0][1]) * (p3[0][0] - p2[0][0])) - (
+        float(p2[0][0] - p1[0][0]) * (p3[0][1] - p2[0][1])
+    )
+    return val > 0
+
+
+def orientation_quadrupel(points, clockwise=True):
+    p0, p1, p2, p3 = points
+    return all(
+        (
+            is_clockwise_triangle((p0, p1, p2)) == clockwise,
+            is_clockwise_triangle((p1, p2, p3)) == clockwise,
+            is_clockwise_triangle((p2, p3, p0)) == clockwise,
+        )
+    )
+
+
+def project_points_pos_z(homogeneous_points, transform_matrix):
+    res = []
+    for p in homogeneous_points:
+        projected_point = np.dot(transform_matrix, p[0])
+        if projected_point[2] < 0:
+            projected_point[2] = (
+                np.linalg.norm([projected_point[0], projected_point[1]]) / 32
+            )
+        res.append(projected_point)
+    return res
+
+
+def _perspective_transform(points, transform_matrix):
+    homogeneous_points = cv2.convertPointsToHomogeneous(points)
+
+    proj_unflipped = project_points_pos_z(homogeneous_points, transform_matrix)
+    points_unflipped = cv2.convertPointsFromHomogeneous(np.asarray(proj_unflipped))
+    orientation_unflipped = orientation_quadrupel(points_unflipped, clockwise=True)
+
+    proj_flipped = project_points_pos_z(-homogeneous_points, transform_matrix)
+    points_flipped = cv2.convertPointsFromHomogeneous(np.asarray(proj_flipped))
+    orientation_flipped = orientation_quadrupel(points_flipped, clockwise=True)
+
+    if orientation_unflipped and not orientation_flipped:
+        return points_unflipped
+    if orientation_flipped and not orientation_unflipped:
+        return points_flipped
+    if orientation_unflipped and orientation_flipped:
+
+        def min_dist(points):
+            return min([np.linalg.norm(p) for p in points])
+
+        if min_dist(points_flipped) < min_dist(points_unflipped):
+            return points_flipped
+        else:
+            return points_unflipped
+    return points_unflipped
 
 
 def _find_homographies(points_A, points_B):
