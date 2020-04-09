@@ -12,7 +12,6 @@ from setuptools import find_packages, setup
 
 package_dir = "src"
 package = "surface_tracker"
-package_data = {}
 
 
 install_requires = ["numpy"]  # TODO: Add OpenCV to requirements
@@ -47,7 +46,6 @@ if __name__ == "__main__":
         long_description_content_type="text/markdown",
         name="surface-tracker",
         packages=find_packages(package_dir),
-        package_data={package: package_data},
         package_dir={"": package_dir},
         url="https://github.com/pupil-labs/surface-tracker",
         version="0.0.1",

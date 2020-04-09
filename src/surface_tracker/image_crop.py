@@ -12,7 +12,6 @@ import typing as T
 import numpy as np
 import cv2
 
-from .camera import CameraModel
 from .corner import CornerId
 from .location import SurfaceLocation
 
@@ -22,7 +21,6 @@ class SurfaceImageCrop:
     @staticmethod
     def _create_image_crop(
         location: SurfaceLocation,
-        camera_model,
         width: T.Optional[int],
         height: T.Optional[int],
     ):
@@ -38,9 +36,6 @@ class SurfaceImageCrop:
 
         surface_corners_in_image_space = location._map_from_surface_to_image(
             points=surface_corners_in_surface_space,
-            camera_model=camera_model,
-            compensate_distortion=False,
-            transform_matrix=None,
         )
 
         crop_size = SurfaceImageCrop.__calculate_crop_size(

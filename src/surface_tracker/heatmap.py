@@ -13,7 +13,6 @@ import typing as T
 import numpy as np
 import cv2
 
-from .camera import CameraModel
 from .location import SurfaceLocation
 from .surface import Surface, SurfaceId
 
@@ -32,39 +31,33 @@ class SurfaceHeatmap:
     def _create_surface_heatmap(
         points_in_image_space: T.List[T.Tuple[int, int]],
         location: SurfaceLocation,
-        camera_model: CameraModel,
     ):
         surface_heatmap = SurfaceHeatmap(surface_uid=location.surface_uid)
         surface_heatmap._add_points(
             points_in_image_space=points_in_image_space,
             location=location,
-            camera_model=camera_model,
         )
         return surface_heatmap
 
     def __init__(self, surface_uid: SurfaceId):
         self.__surface_uid = surface_uid
-        self.__points_in_surface_space_numpy = np.zeros((0, 2), dtype=np.float32)
+        self.__points_in_surface_space_numpy = []
         self._invalidate_cached_computations()
 
     def _add_points(
         self,
         points_in_image_space: T.List[T.Tuple[int, int]],
         location: SurfaceLocation,
-        camera_model: CameraModel,
     ):
         points_in_image_space_numpy = np.asarray(
             points_in_image_space, dtype=np.float32
         )
         new_points_in_surface_space_numpy = location._map_from_image_to_surface(
-            points=np.asarray(points_in_image_space_numpy, dtype=np.float32),
-            camera_model=camera_model,
-            compensate_distortion=True,
+            points=np.asarray(points_in_image_space_numpy, dtype=np.float32)
         )
-        self.__points_in_surface_space_numpy = np.concatenate(
-            (self.__points_in_surface_space_numpy, new_points_in_surface_space_numpy),
-            axis=0,
-        )
+
+        for p in new_points_in_surface_space_numpy:
+            self.__points_in_surface_space_numpy.append(p)
 
     def image(
         self,
@@ -84,7 +77,8 @@ class SurfaceHeatmap:
         heatmap_blur_factor = 0.0
 
         if cache_key not in self.__heatmap_image_by_size_and_color_format:
-            heatmap_data = self.__points_in_surface_space_numpy
+            heatmap_data = np.asarray(self.__points_in_surface_space_numpy)
+
             aspect_ratio = size[1] / size[0]
             grid = (
                 max(1, int(heatmap_resolution * aspect_ratio)),

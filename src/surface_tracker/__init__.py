@@ -7,7 +7,7 @@ Lesser General Public License (LGPL v3.0).
 See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
-from .camera import CameraModel
+from .coordinate_space import CoordinateSpace
 from .corner import CornerId
 from .heatmap import SurfaceHeatmap
 from .image_crop import SurfaceImageCrop

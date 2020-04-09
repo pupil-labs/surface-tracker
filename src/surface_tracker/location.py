@@ -14,9 +14,9 @@ import typing as T
 import numpy as np
 import cv2
 
-from .camera import CameraModel
+from .coordinate_space import CoordinateSpace
 from .corner import CornerId
-from .marker import Marker, MarkerId, _MarkerInImageSpace, _MarkerInSurfaceSpace
+from .marker import Marker, MarkerId, _Marker
 from .surface import Surface, SurfaceId
 
 
@@ -62,17 +62,7 @@ class SurfaceLocation(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def transform_matrix_from_image_to_surface_distorted(self) -> np.ndarray:
-        raise NotImplementedError()
-
-    @property
-    @abc.abstractmethod
     def transform_matrix_from_image_to_surface_undistorted(self) -> np.ndarray:
-        raise NotImplementedError()
-
-    @property
-    @abc.abstractmethod
-    def transform_matrix_from_surface_to_image_distorted(self) -> np.ndarray:
         raise NotImplementedError()
 
     @property
@@ -84,16 +74,17 @@ class SurfaceLocation(abc.ABC):
 
     @staticmethod
     def _create_location_from_markers(
-        surface: Surface, markers: T.List[Marker], camera_model: CameraModel
+        surface: Surface, markers: T.List[Marker]
     ) -> "SurfaceLocation":
 
         if surface is None:
             raise ValueError("Surface is None")
 
+        if not all(m.coordinate_space == CoordinateSpace.IMAGE_UNDISTORTED for m in markers):
+            raise ValueError("Expected all markers to be in undistorted image space")
+
         registered_marker_uids = set(surface.registered_marker_uids)
-        registered_markers_by_uid_distorted = (
-            surface._registered_markers_by_uid_distorted
-        )
+
         registered_markers_by_uid_undistorted = (
             surface._registered_markers_by_uid_undistorted
         )
@@ -115,11 +106,8 @@ class SurfaceLocation(abc.ABC):
             if uid in registered_marker_uids
         }
 
-        # If the surface is defined by 1 marker, but it's missing - return
-        if len(registered_marker_uids) == 1 and len(visible_markers_by_uid) == 0:
-            return None
-        # If the surface is defined by 2 or more markers, but there are fewer than 2 markers visible - return
-        elif len(registered_marker_uids) >= 2 and len(visible_markers_by_uid) < 2:
+        # If no markers are visible - return
+        if len(visible_markers_by_uid) == 0:
             return None
 
         # Get the set of marker UIDs that are both visible and registered
@@ -127,47 +115,25 @@ class SurfaceLocation(abc.ABC):
 
         marker_vertices_order = CornerId.all_corners()
 
-        visible_vertices_distorted = np.array(
+        visible_vertices_undistorted = np.array(
             [
-                visible_markers_by_uid[uid]._vertices_in_image_space(
+                visible_markers_by_uid[uid]._vertices_in_order(
                     order=marker_vertices_order
                 )
                 for uid in matching_marker_uids
             ]
-        )
-        visible_vertices_distorted.shape = (-1, 2)
-
-        visible_vertices_undistorted = camera_model.undistort_points_on_image_plane(
-            visible_vertices_distorted
         )
         visible_vertices_undistorted.shape = (-1, 2)
 
-        registered_vertices_distorted = np.array(
-            [
-                registered_markers_by_uid_distorted[uid]._vertices_in_surface_space(
-                    order=marker_vertices_order
-                )
-                for uid in matching_marker_uids
-            ]
-        )
-        registered_vertices_distorted.shape = (-1, 2)
-
         registered_vertices_undistorted = np.array(
             [
-                registered_markers_by_uid_undistorted[uid]._vertices_in_surface_space(
+                registered_markers_by_uid_undistorted[uid]._vertices_in_order(
                     order=marker_vertices_order
                 )
                 for uid in matching_marker_uids
             ]
         )
         registered_vertices_undistorted.shape = (-1, 2)
-
-        (
-            transform_matrix_from_image_to_surface_distorted,
-            transform_matrix_from_surface_to_image_distorted,
-        ) = _find_homographies(
-            registered_vertices_distorted, visible_vertices_distorted
-        )
 
         (
             transform_matrix_from_image_to_surface_undistorted,
@@ -179,8 +145,6 @@ class SurfaceLocation(abc.ABC):
         return _SurfaceLocation_v2(
             surface_uid=surface.uid,
             number_of_markers_detected=len(matching_marker_uids),
-            transform_matrix_from_image_to_surface_distorted=transform_matrix_from_image_to_surface_distorted,
-            transform_matrix_from_surface_to_image_distorted=transform_matrix_from_surface_to_image_distorted,
             transform_matrix_from_image_to_surface_undistorted=transform_matrix_from_image_to_surface_undistorted,
             transform_matrix_from_surface_to_image_undistorted=transform_matrix_from_surface_to_image_undistorted,
         )
@@ -190,97 +154,85 @@ class SurfaceLocation(abc.ABC):
     def _map_from_image_to_surface(
         self,
         points: np.ndarray,
-        camera_model: CameraModel,
-        compensate_distortion: bool = True,
         transform_matrix=None,
     ) -> np.ndarray:
         return self.__map_points(
             points=points,
-            compensate_distortion=compensate_distortion,
-            compensate_distortion_fn=camera_model.undistort_points_on_image_plane,
             transform_matrix=self.__image_to_surface_transform(
-                compensate_distortion=compensate_distortion,
                 transform_matrix=transform_matrix,
             ),
+            custom_transformation=False,
         )
 
     def _map_from_surface_to_image(
         self,
         points: np.ndarray,
-        camera_model: CameraModel,
-        compensate_distortion: bool = True,
         transform_matrix=None,
     ) -> np.ndarray:
         return self.__map_points(
             points=points,
-            compensate_distortion=compensate_distortion,
-            compensate_distortion_fn=camera_model.distort_points_on_image_plane,
             transform_matrix=self.__surface_to_image_transform(
-                compensate_distortion=compensate_distortion,
                 transform_matrix=transform_matrix,
             ),
+            custom_transformation=True,
         )
 
     def _map_marker_from_image_to_surface(
         self,
         marker: Marker,
-        camera_model: CameraModel,
-        compensate_distortion: bool = True,
         transform_matrix=None,
     ) -> Marker:
 
         order = CornerId.all_corners()
 
-        vertices_in_image_space = marker._vertices_in_image_space(order=order)
+        vertices_in_image_space = marker._vertices_in_order(order=order)
 
         vertices_in_image_space_numpy = np.asarray(vertices_in_image_space).reshape(
             (4, 2)
         )
         vertices_in_surface_space_numpy = self._map_from_image_to_surface(
             points=vertices_in_image_space_numpy,
-            camera_model=camera_model,
-            compensate_distortion=compensate_distortion,
             transform_matrix=transform_matrix,
         )
 
         vertices_in_surface_space = vertices_in_surface_space_numpy.tolist()
 
         assert len(order) == len(vertices_in_surface_space), "Sanity check"
-        mapping = dict(zip(order, vertices_in_surface_space))
+        vertices_by_corner_id = dict(zip(order, vertices_in_surface_space))
 
-        return _MarkerInSurfaceSpace(
-            uid=marker.uid, vertices_in_surface_space_by_corner_id=mapping
+        return _Marker(
+            uid=marker.uid,
+            coordinate_space=CoordinateSpace.SURFACE_UNDISTORTED,
+            vertices_by_corner_id=vertices_by_corner_id,
         )
 
     def _map_marker_from_surface_to_image(
         self,
         marker: Marker,
-        camera_model: CameraModel,
-        compensate_distortion: bool = True,
         transform_matrix=None,
     ) -> Marker:
 
         order = CornerId.all_corners()
 
-        vertices_in_surface_space = marker._vertices_in_surface_space(order=order)
+        vertices_in_surface_space = marker._vertices_in_order(order=order)
 
         vertices_in_surface_space_numpy = np.asarray(vertices_in_surface_space).reshape(
             (4, 2)
         )
         vertices_in_image_space_numpy = self._map_from_surface_to_image(
             points=vertices_in_surface_space_numpy,
-            camera_model=camera_model,
-            compensate_distortion=compensate_distortion,
             transform_matrix=transform_matrix,
         )
 
         vertices_in_image_space = vertices_in_image_space_numpy.tolist()
 
         assert len(order) == len(vertices_in_image_space), "Sanity check"
-        mapping = dict(zip(order, vertices_in_image_space))
+        vertices_by_corner_id = dict(zip(order, vertices_in_image_space))
 
-        return _MarkerInImageSpace(
-            uid=marker.uid, vertices_in_image_space_by_corner_id=mapping
+        return _Marker(
+            uid=marker.uid,
+            coordinate_space=CoordinateSpace.IMAGE_UNDISTORTED,
+            vertices_by_corner_id=vertices_by_corner_id,
         )
 
     ### Serialize
@@ -303,31 +255,22 @@ class SurfaceLocation(abc.ABC):
     ### Private
 
     def __image_to_surface_transform(
-        self, compensate_distortion: bool, transform_matrix: T.Optional[np.ndarray]
+        self, transform_matrix: T.Optional[np.ndarray]
     ) -> np.ndarray:
         if transform_matrix is not None:
             return transform_matrix
-        elif compensate_distortion:
-            return self.transform_matrix_from_image_to_surface_undistorted
-        else:
-            return self.transform_matrix_from_image_to_surface_distorted
+        return self.transform_matrix_from_image_to_surface_undistorted
 
     def __surface_to_image_transform(
-        self, compensate_distortion: bool, transform_matrix: T.Optional[np.ndarray]
+        self, transform_matrix: T.Optional[np.ndarray]
     ) -> np.ndarray:
         if transform_matrix is not None:
             return transform_matrix
-        elif compensate_distortion:
-            return self.transform_matrix_from_surface_to_image_undistorted
-        else:
-            return self.transform_matrix_from_surface_to_image_distorted
+        return self.transform_matrix_from_surface_to_image_undistorted
 
     @staticmethod
     def __map_points(
-        points: np.ndarray,
-        compensate_distortion_fn,
-        compensate_distortion: bool,
-        transform_matrix: np.ndarray,
+        points: np.ndarray, transform_matrix: np.ndarray, custom_transformation=False
     ) -> np.ndarray:
 
         points = np.asarray(points)
@@ -343,24 +286,78 @@ class SurfaceLocation(abc.ABC):
                 f"Expected points to have shape (2,) or (N, 2), but got {points.shape}"
             )
 
-        # Distortion compensation
-
-        if compensate_distortion:
-            shape = points.shape
-            points = compensate_distortion_fn(points)
-            points.shape = shape
-
         # Perspective transform
 
         shape = points.shape
         points.shape = (-1, 1, 2)
-        points = cv2.perspectiveTransform(points, transform_matrix)
+        if custom_transformation:
+            points = _perspective_transform(points, transform_matrix)
+        else:
+            points = cv2.perspectiveTransform(points, transform_matrix)
         points.shape = shape
 
         return points
 
 
 ##### Helper functions
+
+
+def is_clockwise_triangle(points):
+    p1, p2, p3 = points
+    val = (float(p2[0][1] - p1[0][1]) * (p3[0][0] - p2[0][0])) - (
+        float(p2[0][0] - p1[0][0]) * (p3[0][1] - p2[0][1])
+    )
+    return val > 0
+
+
+def orientation_quadrupel(points, clockwise=True):
+    p0, p1, p2, p3 = points
+    return all(
+        (
+            is_clockwise_triangle((p0, p1, p2)) == clockwise,
+            is_clockwise_triangle((p1, p2, p3)) == clockwise,
+            is_clockwise_triangle((p2, p3, p0)) == clockwise,
+        )
+    )
+
+
+def project_points_pos_z(homogeneous_points, transform_matrix):
+    res = []
+    for p in homogeneous_points:
+        projected_point = np.dot(transform_matrix, p[0])
+        if projected_point[2] < 0:
+            projected_point[2] = (
+                np.linalg.norm([projected_point[0], projected_point[1]]) / 32
+            )
+        res.append(projected_point)
+    return res
+
+
+def _perspective_transform(points, transform_matrix):
+    homogeneous_points = cv2.convertPointsToHomogeneous(points)
+
+    proj_unflipped = project_points_pos_z(homogeneous_points, transform_matrix)
+    points_unflipped = cv2.convertPointsFromHomogeneous(np.asarray(proj_unflipped))
+    orientation_unflipped = orientation_quadrupel(points_unflipped, clockwise=True)
+
+    proj_flipped = project_points_pos_z(-homogeneous_points, transform_matrix)
+    points_flipped = cv2.convertPointsFromHomogeneous(np.asarray(proj_flipped))
+    orientation_flipped = orientation_quadrupel(points_flipped, clockwise=True)
+
+    if orientation_unflipped and not orientation_flipped:
+        return points_unflipped
+    if orientation_flipped and not orientation_unflipped:
+        return points_flipped
+    if orientation_unflipped and orientation_flipped:
+
+        def min_dist(points):
+            return min([np.linalg.norm(p) for p in points])
+
+        if min_dist(points_flipped) < min_dist(points_unflipped):
+            return points_flipped
+        else:
+            return points_unflipped
+    return points_unflipped
 
 
 def _find_homographies(points_A, points_B):
@@ -415,16 +412,8 @@ class _SurfaceLocation_v2(SurfaceLocation):
         return self.__number_of_markers_detected
 
     @property
-    def transform_matrix_from_image_to_surface_distorted(self) -> np.ndarray:
-        return self.__transform_matrix_from_image_to_surface_distorted
-
-    @property
     def transform_matrix_from_image_to_surface_undistorted(self) -> np.ndarray:
         return self.__transform_matrix_from_image_to_surface_undistorted
-
-    @property
-    def transform_matrix_from_surface_to_image_distorted(self) -> np.ndarray:
-        return self.__transform_matrix_from_surface_to_image_distorted
 
     @property
     def transform_matrix_from_surface_to_image_undistorted(self) -> np.ndarray:
@@ -434,20 +423,12 @@ class _SurfaceLocation_v2(SurfaceLocation):
         self,
         surface_uid: SurfaceId,
         number_of_markers_detected: int,
-        transform_matrix_from_image_to_surface_distorted: np.ndarray,
-        transform_matrix_from_surface_to_image_distorted: np.ndarray,
         transform_matrix_from_image_to_surface_undistorted: np.ndarray,
         transform_matrix_from_surface_to_image_undistorted: np.ndarray,
     ):
         self.__is_stale = False
         self.__surface_uid = surface_uid
         self.__number_of_markers_detected = number_of_markers_detected
-        self.__transform_matrix_from_image_to_surface_distorted = (
-            transform_matrix_from_image_to_surface_distorted
-        )
-        self.__transform_matrix_from_surface_to_image_distorted = (
-            transform_matrix_from_surface_to_image_distorted
-        )
         self.__transform_matrix_from_image_to_surface_undistorted = (
             transform_matrix_from_image_to_surface_undistorted
         )
@@ -463,8 +444,6 @@ class _SurfaceLocation_v2(SurfaceLocation):
             "version": self.version,
             "surface_uid": str(self.surface_uid),
             "number_of_markers_detected": self.number_of_markers_detected,
-            "transform_matrix_from_image_to_surface_distorted": self.transform_matrix_from_image_to_surface_distorted.tolist(),
-            "transform_matrix_from_surface_to_image_distorted": self.transform_matrix_from_surface_to_image_distorted.tolist(),
             "transform_matrix_from_image_to_surface_undistorted": self.transform_matrix_from_image_to_surface_undistorted.tolist(),
             "transform_matrix_from_surface_to_image_undistorted": self.transform_matrix_from_surface_to_image_undistorted.tolist(),
         }
@@ -480,12 +459,6 @@ class _SurfaceLocation_v2(SurfaceLocation):
             return _SurfaceLocation_v2(
                 surface_uid=SurfaceId(value["surface_uid"]),
                 number_of_markers_detected=int(value["number_of_markers_detected"]),
-                transform_matrix_from_image_to_surface_distorted=np.asarray(
-                    value["transform_matrix_from_image_to_surface_distorted"]
-                ),
-                transform_matrix_from_surface_to_image_distorted=np.asarray(
-                    value["transform_matrix_from_surface_to_image_distorted"]
-                ),
                 transform_matrix_from_image_to_surface_undistorted=np.asarray(
                     value["transform_matrix_from_image_to_surface_undistorted"]
                 ),

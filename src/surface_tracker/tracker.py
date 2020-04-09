@@ -13,7 +13,6 @@ import typing as T
 
 import numpy as np
 
-from .camera import CameraModel
 from .corner import CornerId
 from .heatmap import SurfaceHeatmap
 from .image_crop import SurfaceImageCrop
@@ -27,8 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class SurfaceTracker:
-    def __init__(self, camera_model: CameraModel):
-        self.__camera_model = camera_model
+    def __init__(self):
         self.__locations_tracker = _SurfaceTrackerWeakLocationStore()
         self.__argument_validator = _SurfaceTrackerArgumentValidator()
 
@@ -39,7 +37,7 @@ class SurfaceTracker:
         """
 
         return Surface._create_surface_from_markers(
-            name=name, markers=markers, camera_model=self.__camera_model
+            name=name, markers=markers,
         )
 
     ### Inspecting a surface
@@ -62,7 +60,6 @@ class SurfaceTracker:
             surface=surface,
             location=location,
             points=[corner.as_tuple() for corner in corners],
-            compensate_distortion=False,
         )
 
         assert len(corners) == len(positions)  # sanity check
@@ -74,7 +71,6 @@ class SurfaceTracker:
         surface: Surface,
         location: SurfaceLocation,
         points: T.List[T.Tuple[float, float]],
-        compensate_distortion: bool = False,
     ) -> T.List[T.Tuple[int, int]]:
         """Transform a list of points in surface space into a list of points in image space.
         """
@@ -89,8 +85,6 @@ class SurfaceTracker:
 
         return location._map_from_surface_to_image(
             points=np.array(points, dtype=np.float32),
-            camera_model=self.__camera_model,
-            compensate_distortion=compensate_distortion,
         ).tolist()
 
     ### Modifying a surface
@@ -121,29 +115,19 @@ class SurfaceTracker:
         ordered_corners = list(new_positions.keys())
         ordered_positions = [new_positions[corner] for corner in ordered_corners]
 
-        ordered_position_in_surface_space_distorted = location._map_from_image_to_surface(
-            points=np.array(ordered_positions, dtype=np.float32),
-            camera_model=self.__camera_model,
-            compensate_distortion=False,
-        ).tolist()
-
         ordered_position_in_surface_space_undistorted = location._map_from_image_to_surface(
             points=np.array(ordered_positions, dtype=np.float32),
-            camera_model=self.__camera_model,
-            compensate_distortion=True,
         ).tolist()
 
         corner_updates = zip(
             ordered_corners,
-            ordered_position_in_surface_space_distorted,
             ordered_position_in_surface_space_undistorted,
         )
 
-        for (corner, new_distorted, new_undistorted) in corner_updates:
+        for (corner, new_undistorted) in corner_updates:
             # TODO: Provide Surface API for moving multiple corners in one call
             surface._move_corner(
                 corner=corner,
-                new_position_in_surface_space_distorted=new_distorted,
                 new_position_in_surface_space_undistorted=new_undistorted,
             )
 
@@ -181,20 +165,12 @@ class SurfaceTracker:
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
         for marker in markers:
-            marker_distorted = location._map_marker_from_image_to_surface(
-                marker=marker,
-                camera_model=self.__camera_model,
-                compensate_distortion=False,
-            )
 
             marker_undistorted = location._map_marker_from_image_to_surface(
                 marker=marker,
-                camera_model=self.__camera_model,
-                compensate_distortion=True,
             )
 
             surface._add_marker(
-                marker_distorted=marker_distorted,
                 marker_undistorted=marker_undistorted,
             )
 
@@ -243,7 +219,7 @@ class SurfaceTracker:
         self.__argument_validator.validate_surface(surface=surface)
 
         location = SurfaceLocation._create_location_from_markers(
-            surface=surface, markers=markers, camera_model=self.__camera_model
+            surface=surface, markers=markers,
         )
 
         if location is not None:
@@ -266,7 +242,7 @@ class SurfaceTracker:
         )
 
         return SurfaceVisualAnchors._create_from_location(
-            location=location, camera_model=self.__camera_model
+            location=location,
         )
 
     def locate_surface_image_crop(
@@ -286,7 +262,6 @@ class SurfaceTracker:
 
         return SurfaceImageCrop._create_image_crop(
             location=location,
-            camera_model=self.__camera_model,
             width=width,
             height=height,
         )
@@ -314,7 +289,6 @@ class SurfaceTracker:
         heatmap = SurfaceHeatmap._create_surface_heatmap(
             points_in_image_space=points,
             location=location,
-            camera_model=self.__camera_model,
         )
 
         return (image_crop, heatmap)

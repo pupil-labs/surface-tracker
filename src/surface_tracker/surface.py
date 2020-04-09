@@ -17,9 +17,9 @@ import uuid
 import numpy as np
 import cv2
 
-from .camera import CameraModel
+from .coordinate_space import CoordinateSpace
 from .corner import CornerId
-from .marker import Marker, MarkerId, _MarkerInSurfaceSpace
+from .marker import Marker, MarkerId, _Marker
 
 
 logger = logging.getLogger(__name__)
@@ -62,16 +62,6 @@ class Surface(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def _registered_markers_by_uid_distorted(self) -> T.Mapping[MarkerId, Marker]:
-        raise NotImplementedError()
-
-    @_registered_markers_by_uid_distorted.setter
-    @abc.abstractmethod
-    def _registered_markers_by_uid_distorted(self, value: T.Mapping[MarkerId, Marker]):
-        raise NotImplementedError()
-
-    @property
-    @abc.abstractmethod
     def _registered_markers_by_uid_undistorted(self) -> T.Mapping[MarkerId, Marker]:
         raise NotImplementedError()
 
@@ -84,59 +74,26 @@ class Surface(abc.ABC):
 
     @property
     def registered_marker_uids(self) -> T.Set[MarkerId]:
-        marker_uids_distorted = set(self._registered_markers_by_uid_distorted.keys())
-        marker_uids_undistorted = set(
-            self._registered_markers_by_uid_undistorted.keys()
-        )
-        marker_uids_diff = marker_uids_distorted.symmetric_difference(
-            marker_uids_undistorted
-        )
-
-        for uid in marker_uids_diff:
-            logger.debug(f"Removing inconsistently registered marker with UID: {uid}")
-            del self._registered_markers_by_uid_distorted[uid]
-            del self._registered_markers_by_uid_undistorted[uid]
-
-        return set(self._registered_markers_by_uid_distorted.keys())
+        return set(self._registered_markers_by_uid_undistorted.keys())
 
     ### Update
 
-    def _add_marker(self, marker_distorted: Marker, marker_undistorted: Marker):
+    def _add_marker(self, marker_undistorted: Marker):
+        if marker_undistorted.coordinate_space != CoordinateSpace.SURFACE_UNDISTORTED:
+            raise ValueError(f"Expected marker_undistorted to be in undistorted surface space")
 
-        if not isinstance(marker_distorted, _MarkerInSurfaceSpace):
-            raise ValueError(f"Expected marker_distorted in surface space")
-
-        if not isinstance(marker_undistorted, _MarkerInSurfaceSpace):
-            raise ValueError(f"Expected marker_undistorted in surface space")
-
-        if marker_distorted.uid != marker_undistorted.uid:
-            raise ValueError(
-                f"Expected marker marker_distorted UID to match marker_undistorted UID"
-            )
-
-        marker_uid = marker_distorted.uid
-        self._registered_markers_by_uid_distorted[marker_uid] = marker_distorted
+        marker_uid = marker_undistorted.uid
         self._registered_markers_by_uid_undistorted[marker_uid] = marker_undistorted
 
     def _remove_marker(self, marker_uid: MarkerId):
-        self._registered_markers_by_uid_distorted[marker_uid] = None
         self._registered_markers_by_uid_undistorted[marker_uid] = None
-        del self._registered_markers_by_uid_distorted[marker_uid]
         del self._registered_markers_by_uid_undistorted[marker_uid]
 
     def _move_corner(
         self,
         corner: CornerId,
-        new_position_in_surface_space_distorted: T.Tuple[float, float],
         new_position_in_surface_space_undistorted: T.Tuple[float, float],
     ):
-
-        self._registered_markers_by_uid_distorted = self.__move_corner(
-            corner=corner,
-            registered_markers_by_uid=self._registered_markers_by_uid_distorted,
-            new_position_in_surface_space=new_position_in_surface_space_distorted,
-        )
-
         self._registered_markers_by_uid_undistorted = self.__move_corner(
             corner=corner,
             registered_markers_by_uid=self._registered_markers_by_uid_undistorted,
@@ -164,53 +121,40 @@ class Surface(abc.ABC):
 
     @staticmethod
     def _create_surface_from_markers(
-        name: str, markers: T.List[Marker], camera_model: CameraModel
+        name: str, markers: T.List[Marker]
     ) -> T.Optional["Surface"]:
         if not markers:
             return None
 
+        if not all(m.coordinate_space == CoordinateSpace.IMAGE_UNDISTORTED for m in markers):
+            raise ValueError(f"TODO")
+
         markers = _check_markers_uniqueness(markers)
         marker_vertices_order = CornerId.all_corners()
-        vertices = [
-            m._vertices_in_image_space(order=marker_vertices_order) for m in markers
-        ]
+        vertices = [m._vertices_in_order(order=marker_vertices_order) for m in markers]
 
-        vertices_distorted = np.array(vertices, dtype=np.float32)
-        vertices_distorted.shape = (-1, 2)
-        vertices_undistorted = camera_model.undistort_points_on_image_plane(
-            vertices_distorted
-        )
+        vertices_undistorted = np.array(vertices, dtype=np.float32)
+        vertices_undistorted.shape = (-1, 2)
 
-        marker_surface_coordinates_distorted = _get_marker_surface_coordinates(
-            vertices_distorted
-        )
         marker_surface_coordinates_undistorted = _get_marker_surface_coordinates(
             vertices_undistorted
         )
 
         # Reshape to [marker, marker...]
         # where marker = [[u1, v1], [u2, v2], [u3, v3], [u4, v4]]
-        marker_surface_coordinates_distorted.shape = (-1, 4, 2)
         marker_surface_coordinates_undistorted.shape = (-1, 4, 2)
 
-        registered_markers_distorted = {}
         registered_markers_undistorted = {}
 
         # Add observations to library
-        for marker, uv_dist, uv_undist in zip(
+        for marker, uv_undist in zip(
             markers,
-            marker_surface_coordinates_distorted,
             marker_surface_coordinates_undistorted,
         ):
-            registered_markers_distorted[marker.uid] = _MarkerInSurfaceSpace(
+            registered_markers_undistorted[marker.uid] = _Marker(
                 uid=marker.uid,
-                vertices_in_surface_space_by_corner_id=dict(
-                    zip(marker_vertices_order, uv_dist.tolist())
-                ),
-            )
-            registered_markers_undistorted[marker.uid] = _MarkerInSurfaceSpace(
-                uid=marker.uid,
-                vertices_in_surface_space_by_corner_id=dict(
+                coordinate_space=CoordinateSpace.SURFACE_UNDISTORTED,
+                vertices_by_corner_id=dict(
                     zip(marker_vertices_order, uv_undist.tolist())
                 ),
             )
@@ -222,7 +166,6 @@ class Surface(abc.ABC):
         return _Surface_V2(
             uid=uid,
             name=name,
-            registered_markers_distorted=registered_markers_distorted,
             registered_markers_undistorted=registered_markers_undistorted,
         )
 
@@ -231,7 +174,7 @@ class Surface(abc.ABC):
     def __move_corner(
         self,
         corner: CornerId,
-        registered_markers_by_uid: T.Mapping[MarkerId, _MarkerInSurfaceSpace],
+        registered_markers_by_uid: T.Mapping[MarkerId, Marker],
         new_position_in_surface_space: T.Tuple[float, float],
     ):
         order = CornerId.all_corners()
@@ -249,14 +192,16 @@ class Surface(abc.ABC):
 
         for marker_uid, marker in registered_markers_by_uid.items():
             old_vertices = np.asarray(
-                marker._vertices_in_surface_space(order=order), dtype=np.float32
+                marker._vertices_in_order(order=order), dtype=np.float32
             )
             new_vertices = cv2.perspectiveTransform(
                 old_vertices.reshape((-1, 1, 2)), transform
             ).reshape((-1, 2))
             mapping = dict(zip(order, new_vertices.tolist()))
-            registered_markers_by_uid[marker_uid] = _MarkerInSurfaceSpace(
-                uid=marker_uid, vertices_in_surface_space_by_corner_id=mapping,
+            registered_markers_by_uid[marker_uid] = _Marker(
+                uid=marker_uid,
+                coordinate_space=marker.coordinate_space,  # FIXME
+                vertices_by_corner_id=mapping,
             )
 
         return registered_markers_by_uid
@@ -395,14 +340,6 @@ class _Surface_V2(Surface):
         return self.__name
 
     @property
-    def _registered_markers_by_uid_distorted(self) -> T.Mapping[MarkerId, Marker]:
-        return self.__registered_markers_by_uid_distorted
-
-    @_registered_markers_by_uid_distorted.setter
-    def _registered_markers_by_uid_distorted(self, value: T.Mapping[MarkerId, Marker]):
-        self.__registered_markers_by_uid_distorted = value
-
-    @property
     def _registered_markers_by_uid_undistorted(self) -> T.Mapping[MarkerId, Marker]:
         return self.__registered_markers_by_uid_undistorted
 
@@ -413,11 +350,6 @@ class _Surface_V2(Surface):
         self.__registered_markers_by_uid_undistorted = value
 
     def as_dict(self) -> dict:
-        registered_markers_distorted = self._registered_markers_by_uid_distorted
-        registered_markers_distorted = dict(
-            (k, v.as_dict()) for k, v in registered_markers_distorted.items()
-        )
-
         registered_markers_undistorted = self._registered_markers_by_uid_undistorted
         registered_markers_undistorted = dict(
             (k, v.as_dict()) for k, v in registered_markers_undistorted.items()
@@ -427,7 +359,6 @@ class _Surface_V2(Surface):
             "version": self.version,
             "uid": str(self.uid),
             "name": self.name,
-            "registered_markers_distorted": registered_markers_distorted,
             "registered_markers_undistorted": registered_markers_undistorted,
         }
 
@@ -440,12 +371,6 @@ class _Surface_V2(Surface):
                 expected_version == actual_version
             ), f"Surface version missmatch; expected {expected_version}, but got {actual_version}"
 
-            registered_markers_distorted = value["registered_markers_distorted"]
-            registered_markers_distorted = dict(
-                (k, Marker.from_dict(v))
-                for k, v in registered_markers_distorted.items()
-            )
-
             registered_markers_undistorted = value["registered_markers_undistorted"]
             registered_markers_undistorted = dict(
                 (k, Marker.from_dict(v))
@@ -455,7 +380,6 @@ class _Surface_V2(Surface):
             return _Surface_V2(
                 uid=SurfaceId(value["uid"]),
                 name=value["name"],
-                registered_markers_distorted=registered_markers_distorted,
                 registered_markers_undistorted=registered_markers_undistorted,
             )
         except Exception as err:
@@ -465,10 +389,9 @@ class _Surface_V2(Surface):
         self,
         uid: SurfaceId,
         name: str,
-        registered_markers_distorted: T.Mapping[MarkerId, _MarkerInSurfaceSpace],
-        registered_markers_undistorted: T.Mapping[MarkerId, _MarkerInSurfaceSpace],
+        registered_markers_undistorted: T.Mapping[MarkerId, Marker],
     ):
         self.__uid = uid
         self.__name = name
-        self.__registered_markers_by_uid_distorted = registered_markers_distorted
         self.__registered_markers_by_uid_undistorted = registered_markers_undistorted
+        assert all(m.coordinate_space == CoordinateSpace.SURFACE_UNDISTORTED for m in registered_markers_undistorted.values())
