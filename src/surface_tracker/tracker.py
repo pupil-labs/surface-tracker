@@ -36,9 +36,7 @@ class SurfaceTracker:
         """
         """
 
-        return Surface._create_surface_from_markers(
-            name=name, markers=markers,
-        )
+        return Surface._create_surface_from_markers(name=name, markers=markers)
 
     ### Inspecting a surface
 
@@ -84,7 +82,7 @@ class SurfaceTracker:
             return []
 
         return location._map_from_surface_to_image(
-            points=np.array(points, dtype=np.float32),
+            points=np.array(points, dtype=np.float32)
         ).tolist()
 
     ### Modifying a surface
@@ -116,19 +114,17 @@ class SurfaceTracker:
         ordered_positions = [new_positions[corner] for corner in ordered_corners]
 
         ordered_position_in_surface_space_undistorted = location._map_from_image_to_surface(
-            points=np.array(ordered_positions, dtype=np.float32),
+            points=np.array(ordered_positions, dtype=np.float32)
         ).tolist()
 
         corner_updates = zip(
-            ordered_corners,
-            ordered_position_in_surface_space_undistorted,
+            ordered_corners, ordered_position_in_surface_space_undistorted
         )
 
         for (corner, new_undistorted) in corner_updates:
             # TODO: Provide Surface API for moving multiple corners in one call
             surface._move_corner(
-                corner=corner,
-                new_position_in_surface_space_undistorted=new_undistorted,
+                corner=corner, new_position_in_surface_space_undistorted=new_undistorted
             )
 
     def add_markers_to_surface(
@@ -167,12 +163,10 @@ class SurfaceTracker:
         for marker in markers:
 
             marker_undistorted = location._map_marker_from_image_to_surface(
-                marker=marker,
+                marker=marker
             )
 
-            surface._add_marker(
-                marker_undistorted=marker_undistorted,
-            )
+            surface._add_marker(marker_undistorted=marker_undistorted)
 
     def remove_markers_from_surface(
         self,
@@ -219,7 +213,7 @@ class SurfaceTracker:
         self.__argument_validator.validate_surface(surface=surface)
 
         location = SurfaceLocation._create_location_from_markers(
-            surface=surface, markers=markers,
+            surface=surface, markers=markers
         )
 
         if location is not None:

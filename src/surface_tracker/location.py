@@ -80,7 +80,9 @@ class SurfaceLocation(abc.ABC):
         if surface is None:
             raise ValueError("Surface is None")
 
-        if not all(m.coordinate_space == CoordinateSpace.IMAGE_UNDISTORTED for m in markers):
+        if not all(
+            m.coordinate_space == CoordinateSpace.IMAGE_UNDISTORTED for m in markers
+        ):
             raise ValueError("Expected all markers to be in undistorted image space")
 
         registered_marker_uids = set(surface.registered_marker_uids)
@@ -152,35 +154,29 @@ class SurfaceLocation(abc.ABC):
     ### Mapping
 
     def _map_from_image_to_surface(
-        self,
-        points: np.ndarray,
-        transform_matrix=None,
+        self, points: np.ndarray, transform_matrix=None
     ) -> np.ndarray:
         return self.__map_points(
             points=points,
             transform_matrix=self.__image_to_surface_transform(
-                transform_matrix=transform_matrix,
+                transform_matrix=transform_matrix
             ),
             custom_transformation=False,
         )
 
     def _map_from_surface_to_image(
-        self,
-        points: np.ndarray,
-        transform_matrix=None,
+        self, points: np.ndarray, transform_matrix=None
     ) -> np.ndarray:
         return self.__map_points(
             points=points,
             transform_matrix=self.__surface_to_image_transform(
-                transform_matrix=transform_matrix,
+                transform_matrix=transform_matrix
             ),
             custom_transformation=True,
         )
 
     def _map_marker_from_image_to_surface(
-        self,
-        marker: Marker,
-        transform_matrix=None,
+        self, marker: Marker, transform_matrix=None
     ) -> Marker:
 
         order = CornerId.all_corners()
@@ -191,8 +187,7 @@ class SurfaceLocation(abc.ABC):
             (4, 2)
         )
         vertices_in_surface_space_numpy = self._map_from_image_to_surface(
-            points=vertices_in_image_space_numpy,
-            transform_matrix=transform_matrix,
+            points=vertices_in_image_space_numpy, transform_matrix=transform_matrix
         )
 
         vertices_in_surface_space = vertices_in_surface_space_numpy.tolist()
@@ -207,9 +202,7 @@ class SurfaceLocation(abc.ABC):
         )
 
     def _map_marker_from_surface_to_image(
-        self,
-        marker: Marker,
-        transform_matrix=None,
+        self, marker: Marker, transform_matrix=None
     ) -> Marker:
 
         order = CornerId.all_corners()
@@ -220,8 +213,7 @@ class SurfaceLocation(abc.ABC):
             (4, 2)
         )
         vertices_in_image_space_numpy = self._map_from_surface_to_image(
-            points=vertices_in_surface_space_numpy,
-            transform_matrix=transform_matrix,
+            points=vertices_in_surface_space_numpy, transform_matrix=transform_matrix
         )
 
         vertices_in_image_space = vertices_in_image_space_numpy.tolist()
