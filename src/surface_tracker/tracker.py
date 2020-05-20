@@ -241,14 +241,14 @@ class SurfaceTracker:
             surface=surface, location=location, ignore_location_staleness=False
         )
 
-        return SurfaceVisualAnchors._create_from_location(
-            location=location,
-        )
+        return SurfaceVisualAnchors._create_from_location(location=location)
 
     def locate_surface_image_crop(
         self,
         surface: Surface,
         location: SurfaceLocation,
+        camera_matrix: np.array,
+        dist_coeffs: np.array,
         width: T.Optional[int] = None,
         height: T.Optional[int] = None,
     ) -> SurfaceImageCrop:
@@ -257,19 +257,19 @@ class SurfaceTracker:
 
         # Validate the surface definition and the surface location arguments
         self.__argument_validator.validate_surface_and_location(
-            surface=surface, location=location, ignore_location_staleness=False,
+            surface=surface, location=location, ignore_location_staleness=False
         )
 
         return SurfaceImageCrop._create_image_crop(
-            location=location,
-            width=width,
-            height=height,
+            location, camera_matrix, dist_coeffs, width=width, height=height
         )
 
     def locate_surface_image_crop_with_heatmap(
         self,
         surface: Surface,
         location: SurfaceLocation,
+        camera_matrix: np.array,
+        dist_coeffs: np.array,
         points: T.List[T.Tuple[int, int]],
         width: T.Optional[int] = None,
         height: T.Optional[int] = None,
@@ -283,12 +283,16 @@ class SurfaceTracker:
         )
 
         image_crop = self.locate_surface_image_crop(
-            surface=surface, location=location, width=width, height=height,
+            surface=surface,
+            location=location,
+            camera_matrx=camera_matrix,
+            dist_coeffs=dist_coeffs,
+            width=width,
+            height=height,
         )
 
         heatmap = SurfaceHeatmap._create_surface_heatmap(
-            points_in_image_space=points,
-            location=location,
+            points_in_image_space=points, location=location
         )
 
         return (image_crop, heatmap)
