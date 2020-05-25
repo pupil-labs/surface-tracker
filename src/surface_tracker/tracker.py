@@ -7,7 +7,6 @@ Lesser General Public License (LGPL v3.0).
 See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
-import collections
 import logging
 import typing as T
 
@@ -19,7 +18,7 @@ from .heatmap import SurfaceHeatmap
 from .image_crop import SurfaceImageCrop
 from .marker import Marker, MarkerId
 from .location import SurfaceLocation
-from .surface import Surface, SurfaceId
+from .surface import Surface
 from .visual_anchors import SurfaceVisualAnchors
 
 
@@ -31,7 +30,7 @@ class SurfaceTracker:
         self.__locations_tracker = _SurfaceTrackerWeakLocationStore()
         self.__argument_validator = _SurfaceTrackerArgumentValidator()
 
-    ### Creating a surface
+    # ## Creating a surface
 
     def define_surface(self, name: str, markers: T.List[Marker]) -> T.Optional[Surface]:
         """
@@ -39,7 +38,7 @@ class SurfaceTracker:
 
         return Surface._create_surface_from_markers(name=name, markers=markers)
 
-    ### Inspecting a surface
+    # ## Inspecting a surface
 
     def surface_corner_positions_in_image_space(
         self, surface: Surface, location: SurfaceLocation, corners: T.List[CornerId]
@@ -86,7 +85,7 @@ class SurfaceTracker:
             points=np.array(points, dtype=np.float32)
         ).tolist()
 
-    ### Modifying a surface
+    # ## Modifying a surface
 
     def move_surface_corner_positions_in_image_space(
         self,
@@ -108,7 +107,8 @@ class SurfaceTracker:
         if len(new_positions) == 0:
             return
 
-        # Since this action mutates the surface definition, mark previously computed locations as stale
+        # Since this action mutates the surface definition, mark previously computed
+        # locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
         ordered_corners = list(new_positions.keys())
@@ -158,7 +158,8 @@ class SurfaceTracker:
             # If there are no markers to add, return without invalidating the locations
             return
 
-        # Since this action mutates the surface definition, mark previously computed locations as stale
+        # Since this action mutates the surface definition, mark previously computed
+        # locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
         for marker in markers:
@@ -193,16 +194,18 @@ class SurfaceTracker:
         marker_uids = marker_uids.intersection(surface.registered_marker_uids)
 
         if len(marker_uids) == 0:
-            # If there are no markers to remove, return without invalidating the locations
+            # If there are no markers to remove, return without invalidating the
+            # locations
             return
 
-        # Since this action mutates the surface definition, mark previously computed locations as stale
+        # Since this action mutates the surface definition, mark previously computed
+        # locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
         for marker_uid in marker_uids:
             surface._remove_marker(marker_uid=marker_uid)
 
-    ### Locating a surface
+    # ## Locating a surface
 
     def locate_surface(
         self, surface: Surface, markers: T.List[Marker]
@@ -218,7 +221,8 @@ class SurfaceTracker:
         )
 
         if location is not None:
-            # Track the created location to invalidate it if the surface is mutated later
+            # Track the created location to invalidate it if the surface is mutated
+            # later
             self.__locations_tracker.track_location_for_surface(
                 surface=surface, location=location
             )
@@ -290,7 +294,7 @@ class SurfaceTracker:
         return (image_crop, heatmap)
 
 
-##### Private Helpers
+# #### Private Helpers
 
 
 import weakref
