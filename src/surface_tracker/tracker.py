@@ -13,6 +13,7 @@ import typing as T
 
 import numpy as np
 
+from .camera import Camera
 from .corner import CornerId
 from .heatmap import SurfaceHeatmap
 from .image_crop import SurfaceImageCrop
@@ -241,8 +242,7 @@ class SurfaceTracker:
         self,
         surface: Surface,
         location: SurfaceLocation,
-        camera_matrix: np.array,
-        dist_coeffs: np.array,
+        camera: Camera,
         width: T.Optional[int] = None,
         height: T.Optional[int] = None,
     ) -> SurfaceImageCrop:
@@ -255,15 +255,14 @@ class SurfaceTracker:
         )
 
         return SurfaceImageCrop._create_image_crop(
-            location, camera_matrix, dist_coeffs, width=width, height=height
+            location, camera, width=width, height=height
         )
 
     def locate_surface_image_crop_with_heatmap(
         self,
         surface: Surface,
         location: SurfaceLocation,
-        camera_matrix: np.array,
-        dist_coeffs: np.array,
+        camera: Camera,
         points: T.List[T.Tuple[int, int]],
         width: T.Optional[int] = None,
         height: T.Optional[int] = None,
@@ -279,8 +278,7 @@ class SurfaceTracker:
         image_crop = self.locate_surface_image_crop(
             surface=surface,
             location=location,
-            camera_matrx=camera_matrix,
-            dist_coeffs=dist_coeffs,
+            camera=camera,
             width=width,
             height=height,
         )

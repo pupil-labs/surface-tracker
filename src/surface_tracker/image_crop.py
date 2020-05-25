@@ -12,6 +12,7 @@ import typing as T
 import numpy as np
 import cv2
 
+from .camera import Camera
 from .corner import CornerId
 from .location import SurfaceLocation
 
@@ -21,8 +22,7 @@ class SurfaceImageCrop:
     @staticmethod
     def _create_image_crop(
         location: SurfaceLocation,
-        camera_matrix: np.ndarray,
-        dist_coeffs: np.ndarray,
+        camera: Camera,
         width: T.Optional[int],
         height: T.Optional[int],
     ):
@@ -40,19 +40,8 @@ class SurfaceImageCrop:
             points=surface_corners_in_surface_space
         )
 
-        surface_corners_in_image_space.shape = -1, 1, 2
-
-        surface_corners_in_image_space = cv2.convertPointsToHomogeneous(
-            surface_corners_in_image_space
-        )
-        surface_corners_in_image_space_distorted = np.squeeze(
-            cv2.projectPoints(
-                surface_corners_in_image_space,
-                rvec=np.zeros((1, 3)),
-                tvec=np.zeros((1, 3)),
-                cameraMatrix=np.asarray(camera_matrix),
-                distCoeffs=np.asarray(dist_coeffs),
-            )[0]
+        surface_corners_in_image_space_distorted = camera.distort_and_project(
+            points=surface_corners_in_image_space
         )
 
         crop_size = SurfaceImageCrop.__calculate_crop_size(
