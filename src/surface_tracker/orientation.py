@@ -12,9 +12,7 @@ from .corner import CornerId
 
 class SurfaceOrientation:
     def __init__(
-        self,
-        surface_start_with: CornerId = CornerId.BOTTOM_RIGHT,
-        clockwise: bool = True,
+        self, surface_start_with: CornerId = CornerId.TOP_LEFT, clockwise: bool = True
     ):
         self.__surface_start_with = surface_start_with
         self.__clockwise = clockwise
