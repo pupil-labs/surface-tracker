@@ -17,4 +17,5 @@ from .marker import Marker, MarkerId
 from .surface import Surface, SurfaceId
 from .tracker import SurfaceTracker
 from .visual_anchors import SurfaceVisualAnchors
+from .orientation import SurfaceOrientation
 from . import utils
