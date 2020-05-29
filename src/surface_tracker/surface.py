@@ -9,7 +9,6 @@ See LICENSE for license details.
 """
 import abc
 import collections
-import enum
 import logging
 import typing as T
 import uuid
@@ -46,7 +45,7 @@ class Surface(abc.ABC):
         storage[version] = cls
         return super().__init_subclass__()
 
-    ### Abstract members
+    # ## Abstract members
 
     version = None  # type: ClassVar[int]
 
@@ -76,11 +75,13 @@ class Surface(abc.ABC):
     def registered_marker_uids(self) -> T.Set[MarkerId]:
         return set(self._registered_markers_by_uid_undistorted.keys())
 
-    ### Update
+    # ## Update
 
     def _add_marker(self, marker_undistorted: Marker):
         if marker_undistorted.coordinate_space != CoordinateSpace.SURFACE_UNDISTORTED:
-            raise ValueError(f"Expected marker_undistorted to be in undistorted surface space")
+            raise ValueError(
+                f"Expected marker_undistorted to be in undistorted surface space"
+            )
 
         marker_uid = marker_undistorted.uid
         self._registered_markers_by_uid_undistorted[marker_uid] = marker_undistorted
@@ -100,7 +101,7 @@ class Surface(abc.ABC):
             new_position_in_surface_space=new_position_in_surface_space_undistorted,
         )
 
-    ### Serialize
+    # ## Serialize
 
     @abc.abstractmethod
     def as_dict(self) -> dict:
@@ -117,7 +118,7 @@ class Surface(abc.ABC):
             )
         return surface_class.from_dict(value)
 
-    ### Factory
+    # ## Factory
 
     @staticmethod
     def _create_surface_from_markers(
@@ -126,7 +127,9 @@ class Surface(abc.ABC):
         if not markers:
             return None
 
-        if not all(m.coordinate_space == CoordinateSpace.IMAGE_UNDISTORTED for m in markers):
+        if not all(
+            m.coordinate_space == CoordinateSpace.IMAGE_UNDISTORTED for m in markers
+        ):
             raise ValueError(f"TODO")
 
         markers = _check_markers_uniqueness(markers)
@@ -147,10 +150,7 @@ class Surface(abc.ABC):
         registered_markers_undistorted = {}
 
         # Add observations to library
-        for marker, uv_undist in zip(
-            markers,
-            marker_surface_coordinates_undistorted,
-        ):
+        for marker, uv_undist in zip(markers, marker_surface_coordinates_undistorted):
             registered_markers_undistorted[marker.uid] = _Marker(
                 uid=marker.uid,
                 coordinate_space=CoordinateSpace.SURFACE_UNDISTORTED,
@@ -169,7 +169,7 @@ class Surface(abc.ABC):
             registered_markers_undistorted=registered_markers_undistorted,
         )
 
-    ### Private
+    # ## Private
 
     def __move_corner(
         self,
@@ -324,7 +324,7 @@ def _GetAnglesPolyline(polyline, closed=False):
     # return alpha #radians
 
 
-##### Concrete implementations
+# #### Concrete implementations
 
 
 class _Surface_V2(Surface):
@@ -394,4 +394,7 @@ class _Surface_V2(Surface):
         self.__uid = uid
         self.__name = name
         self.__registered_markers_by_uid_undistorted = registered_markers_undistorted
-        assert all(m.coordinate_space == CoordinateSpace.SURFACE_UNDISTORTED for m in registered_markers_undistorted.values())
+        assert all(
+            m.coordinate_space == CoordinateSpace.SURFACE_UNDISTORTED
+            for m in registered_markers_undistorted.values()
+        )

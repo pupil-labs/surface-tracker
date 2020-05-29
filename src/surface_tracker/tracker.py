@@ -7,7 +7,6 @@ Lesser General Public License (LGPL v3.0).
 See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
-import collections
 import logging
 import typing as T
 
@@ -18,7 +17,7 @@ from .heatmap import SurfaceHeatmap
 from .image_crop import SurfaceImageCrop
 from .marker import Marker, MarkerId
 from .location import SurfaceLocation
-from .surface import Surface, SurfaceId
+from .surface import Surface
 from .visual_anchors import SurfaceVisualAnchors
 
 
@@ -30,17 +29,15 @@ class SurfaceTracker:
         self.__locations_tracker = _SurfaceTrackerWeakLocationStore()
         self.__argument_validator = _SurfaceTrackerArgumentValidator()
 
-    ### Creating a surface
+    # ## Creating a surface
 
     def define_surface(self, name: str, markers: T.List[Marker]) -> T.Optional[Surface]:
         """
         """
 
-        return Surface._create_surface_from_markers(
-            name=name, markers=markers,
-        )
+        return Surface._create_surface_from_markers(name=name, markers=markers)
 
-    ### Inspecting a surface
+    # ## Inspecting a surface
 
     def surface_corner_positions_in_image_space(
         self, surface: Surface, location: SurfaceLocation, corners: T.List[CornerId]
@@ -84,10 +81,10 @@ class SurfaceTracker:
             return []
 
         return location._map_from_surface_to_image(
-            points=np.array(points, dtype=np.float32),
+            points=np.array(points, dtype=np.float32)
         ).tolist()
 
-    ### Modifying a surface
+    # ## Modifying a surface
 
     def move_surface_corner_positions_in_image_space(
         self,
@@ -109,26 +106,25 @@ class SurfaceTracker:
         if len(new_positions) == 0:
             return
 
-        # Since this action mutates the surface definition, mark previously computed locations as stale
+        # Since this action mutates the surface definition, mark previously computed
+        # locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
         ordered_corners = list(new_positions.keys())
         ordered_positions = [new_positions[corner] for corner in ordered_corners]
 
         ordered_position_in_surface_space_undistorted = location._map_from_image_to_surface(
-            points=np.array(ordered_positions, dtype=np.float32),
+            points=np.array(ordered_positions, dtype=np.float32)
         ).tolist()
 
         corner_updates = zip(
-            ordered_corners,
-            ordered_position_in_surface_space_undistorted,
+            ordered_corners, ordered_position_in_surface_space_undistorted
         )
 
         for (corner, new_undistorted) in corner_updates:
             # TODO: Provide Surface API for moving multiple corners in one call
             surface._move_corner(
-                corner=corner,
-                new_position_in_surface_space_undistorted=new_undistorted,
+                corner=corner, new_position_in_surface_space_undistorted=new_undistorted
             )
 
     def add_markers_to_surface(
@@ -161,18 +157,17 @@ class SurfaceTracker:
             # If there are no markers to add, return without invalidating the locations
             return
 
-        # Since this action mutates the surface definition, mark previously computed locations as stale
+        # Since this action mutates the surface definition, mark previously computed
+        # locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
         for marker in markers:
 
             marker_undistorted = location._map_marker_from_image_to_surface(
-                marker=marker,
+                marker=marker
             )
 
-            surface._add_marker(
-                marker_undistorted=marker_undistorted,
-            )
+            surface._add_marker(marker_undistorted=marker_undistorted)
 
     def remove_markers_from_surface(
         self,
@@ -198,16 +193,18 @@ class SurfaceTracker:
         marker_uids = marker_uids.intersection(surface.registered_marker_uids)
 
         if len(marker_uids) == 0:
-            # If there are no markers to remove, return without invalidating the locations
+            # If there are no markers to remove, return without invalidating the
+            # locations
             return
 
-        # Since this action mutates the surface definition, mark previously computed locations as stale
+        # Since this action mutates the surface definition, mark previously computed
+        # locations as stale
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
         for marker_uid in marker_uids:
             surface._remove_marker(marker_uid=marker_uid)
 
-    ### Locating a surface
+    # ## Locating a surface
 
     def locate_surface(
         self, surface: Surface, markers: T.List[Marker]
@@ -219,11 +216,12 @@ class SurfaceTracker:
         self.__argument_validator.validate_surface(surface=surface)
 
         location = SurfaceLocation._create_location_from_markers(
-            surface=surface, markers=markers,
+            surface=surface, markers=markers
         )
 
         if location is not None:
-            # Track the created location to invalidate it if the surface is mutated later
+            # Track the created location to invalidate it if the surface is mutated
+            # later
             self.__locations_tracker.track_location_for_surface(
                 surface=surface, location=location
             )
@@ -241,9 +239,7 @@ class SurfaceTracker:
             surface=surface, location=location, ignore_location_staleness=False
         )
 
-        return SurfaceVisualAnchors._create_from_location(
-            location=location,
-        )
+        return SurfaceVisualAnchors._create_from_location(location=location)
 
     def locate_surface_image_crop(
         self,
@@ -257,13 +253,11 @@ class SurfaceTracker:
 
         # Validate the surface definition and the surface location arguments
         self.__argument_validator.validate_surface_and_location(
-            surface=surface, location=location, ignore_location_staleness=False,
+            surface=surface, location=location, ignore_location_staleness=False
         )
 
         return SurfaceImageCrop._create_image_crop(
-            location=location,
-            width=width,
-            height=height,
+            location=location, width=width, height=height
         )
 
     def locate_surface_image_crop_with_heatmap(
@@ -283,18 +277,17 @@ class SurfaceTracker:
         )
 
         image_crop = self.locate_surface_image_crop(
-            surface=surface, location=location, width=width, height=height,
+            surface=surface, location=location, width=width, height=height
         )
 
         heatmap = SurfaceHeatmap._create_surface_heatmap(
-            points_in_image_space=points,
-            location=location,
+            points_in_image_space=points, location=location
         )
 
         return (image_crop, heatmap)
 
 
-##### Private Helpers
+# #### Private Helpers
 
 
 import weakref
