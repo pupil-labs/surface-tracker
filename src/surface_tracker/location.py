@@ -16,7 +16,7 @@ import cv2
 
 from .coordinate_space import CoordinateSpace
 from .corner import CornerId
-from .marker import Marker, MarkerId, _Marker
+from .marker import Marker, _Marker
 from .surface import Surface, SurfaceId
 
 
@@ -41,7 +41,7 @@ class SurfaceLocation(abc.ABC):
         storage[version] = cls
         return super().__init_subclass__()
 
-    ### Abstract members
+    # ## Abstract members
 
     version = None  # type: ClassVar[int]
 
@@ -70,7 +70,7 @@ class SurfaceLocation(abc.ABC):
     def transform_matrix_from_surface_to_image_undistorted(self) -> np.ndarray:
         raise NotImplementedError()
 
-    ### Factory
+    # ## Factory
 
     @staticmethod
     def _create_location_from_markers(
@@ -151,7 +151,7 @@ class SurfaceLocation(abc.ABC):
             transform_matrix_from_surface_to_image_undistorted=transform_matrix_from_surface_to_image_undistorted,
         )
 
-    ### Mapping
+    # ## Mapping
 
     def _map_from_image_to_surface(
         self, points: np.ndarray, transform_matrix=None
@@ -227,7 +227,7 @@ class SurfaceLocation(abc.ABC):
             vertices_by_corner_id=vertices_by_corner_id,
         )
 
-    ### Serialize
+    # ## Serialize
 
     @abc.abstractmethod
     def as_dict(self) -> dict:
@@ -244,7 +244,7 @@ class SurfaceLocation(abc.ABC):
             )
         return location_class.from_dict(value)
 
-    ### Private
+    # ## Private
 
     def __image_to_surface_transform(
         self, transform_matrix: T.Optional[np.ndarray]
@@ -291,7 +291,7 @@ class SurfaceLocation(abc.ABC):
         return points
 
 
-##### Helper functions
+# #### Helper functions
 
 
 def is_clockwise_triangle(points):
@@ -365,7 +365,7 @@ def _find_homographies(points_A, points_B):
     try:
         A_to_B = np.linalg.inv(B_to_A)
         return A_to_B, B_to_A
-    except np.linalg.LinAlgError as e:
+    except np.linalg.LinAlgError:
         logger.debug(
             "Failed to calculate inverse homography with np.inv()! "
             "Trying with np.pinv() instead."
@@ -374,7 +374,7 @@ def _find_homographies(points_A, points_B):
     try:
         A_to_B = np.linalg.pinv(B_to_A)
         return A_to_B, B_to_A
-    except np.linalg.LinAlgError as e:
+    except np.linalg.LinAlgError:
         logger.warning(
             "Failed to calculate inverse homography with np.pinv()! "
             "Falling back to inaccurate manual computation!"
@@ -384,7 +384,7 @@ def _find_homographies(points_A, points_B):
     return A_to_B, B_to_A
 
 
-##### Concrete implementations
+# #### Concrete implementations
 
 
 class _SurfaceLocation_v2(SurfaceLocation):

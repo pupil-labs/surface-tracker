@@ -8,7 +8,6 @@ See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
 import abc
-import collections
 import typing as T
 
 from .coordinate_space import CoordinateSpace
@@ -20,7 +19,7 @@ MarkerId = T.NewType("MarkerId", str)
 
 class Marker(abc.ABC):
 
-    ### Abstract members
+    # ## Abstract members
 
     @property
     @abc.abstractmethod
@@ -39,10 +38,12 @@ class Marker(abc.ABC):
         return self._vertices_in_order(order=order)
 
     @abc.abstractmethod
-    def _vertices_in_order(self, order: T.List[CornerId]) -> T.List[T.Tuple[float, float]]:
+    def _vertices_in_order(
+        self, order: T.List[CornerId]
+    ) -> T.List[T.Tuple[float, float]]:
         raise NotImplementedError()
 
-    ### Factory
+    # ## Factory
 
     @staticmethod
     def from_vertices(
@@ -65,10 +66,10 @@ class Marker(abc.ABC):
         return _Marker(
             uid=uid,
             coordinate_space=coordinate_space,
-            vertices_by_corner_id=vertices_by_corner_id
+            vertices_by_corner_id=vertices_by_corner_id,
         )
 
-    ### Serialize
+    # ## Serialize
 
     @staticmethod
     @abc.abstractmethod
@@ -80,11 +81,10 @@ class Marker(abc.ABC):
         raise NotImplementedError()
 
 
-##### Concrete implementations
+# #### Concrete implementations
 
 
 class _Marker(Marker):
-
     @property
     def uid(self) -> MarkerId:
         return self.__uid
@@ -93,7 +93,9 @@ class _Marker(Marker):
     def coordinate_space(self) -> CoordinateSpace:
         return self.__coordinate_space
 
-    def _vertices_in_order(self, order: T.List[CornerId]) -> T.List[T.Tuple[float, float]]:
+    def _vertices_in_order(
+        self, order: T.List[CornerId]
+    ) -> T.List[T.Tuple[float, float]]:
         mapping = self.__vertices_by_corner_id
         return [mapping[c] for c in order]
 

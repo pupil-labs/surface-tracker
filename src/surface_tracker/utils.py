@@ -7,12 +7,6 @@ Lesser General Public License (LGPL v3.0).
 See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
-import functools
-import typing as T
-import warnings
-
-import numpy as np
-import cv2
 
 
 def left_rotation(a: list, k: int):
