@@ -224,7 +224,7 @@ class SurfaceTracker:
 
     # ## Locating a surface
 
-    def get_relative_orientation(self, surface: Surface) -> int:
+    def get_relative_rotation(self, surface: Surface) -> int:
         # Validate the surface definition
         self.__argument_validator.validate_surface(surface=surface)
 
