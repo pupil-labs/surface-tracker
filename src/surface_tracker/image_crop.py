@@ -12,6 +12,7 @@ import typing as T
 import numpy as np
 import cv2
 
+from .camera import Camera
 from .corner import CornerId
 from .location import SurfaceLocation
 
@@ -21,6 +22,7 @@ class SurfaceImageCrop:
     @staticmethod
     def _create_image_crop(
         location: SurfaceLocation,
+        camera: Camera,
         width: T.Optional[int],
         height: T.Optional[int],
     ):
@@ -35,11 +37,15 @@ class SurfaceImageCrop:
         )
 
         surface_corners_in_image_space = location._map_from_surface_to_image(
-            points=surface_corners_in_surface_space,
+            points=surface_corners_in_surface_space
+        )
+
+        surface_corners_in_image_space_distorted = camera.distort_and_project(
+            points=surface_corners_in_image_space
         )
 
         crop_size = SurfaceImageCrop.__calculate_crop_size(
-            *surface_corners_in_image_space.tolist(), width=width, height=height
+            *surface_corners_in_image_space_distorted, width=width, height=height
         )
         crop_w, crop_h = crop_size
 
@@ -52,9 +58,12 @@ class SurfaceImageCrop:
         crop_corners_in_image_space = np.array(
             crop_corners_in_image_space, dtype=np.float32
         )
+        surface_corners_in_image_space_distorted = np.array(
+            surface_corners_in_image_space_distorted, dtype=np.float32
+        )
 
         perspective_transform = cv2.getPerspectiveTransform(
-            surface_corners_in_image_space, crop_corners_in_image_space
+            surface_corners_in_image_space_distorted, crop_corners_in_image_space
         )
 
         return SurfaceImageCrop(
