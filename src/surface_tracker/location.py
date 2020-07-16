@@ -302,7 +302,7 @@ def is_clockwise_triangle(points):
     return val > 0
 
 
-def orientation_quadrupel(points, clockwise=True):
+def orientation_quadrangle(points, clockwise=True):
     p0, p1, p2, p3 = points
     return all(
         (
@@ -330,11 +330,11 @@ def _perspective_transform(points, transform_matrix):
 
     proj_unflipped = project_points_pos_z(homogeneous_points, transform_matrix)
     points_unflipped = cv2.convertPointsFromHomogeneous(np.asarray(proj_unflipped))
-    orientation_unflipped = orientation_quadrupel(points_unflipped, clockwise=True)
+    orientation_unflipped = orientation_quadrangle(points_unflipped, clockwise=True)
 
     proj_flipped = project_points_pos_z(-homogeneous_points, transform_matrix)
     points_flipped = cv2.convertPointsFromHomogeneous(np.asarray(proj_flipped))
-    orientation_flipped = orientation_quadrupel(points_flipped, clockwise=True)
+    orientation_flipped = orientation_quadrangle(points_flipped, clockwise=True)
 
     if orientation_unflipped and not orientation_flipped:
         return points_unflipped

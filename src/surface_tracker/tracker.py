@@ -20,6 +20,7 @@ from .marker import Marker, MarkerId
 from .location import SurfaceLocation
 from .surface import Surface
 from .visual_anchors import SurfaceVisualAnchors
+from .orientation import SurfaceOrientation
 
 
 logger = logging.getLogger(__name__)
@@ -62,7 +63,11 @@ class SurfaceTracker:
 
         assert len(corners) == len(positions)  # sanity check
 
-        return dict(zip(corners, positions))
+        updated_corners = surface.orientation.map_surface_corners_to_rotation(
+            dict(zip(corners, positions))
+        )
+
+        return updated_corners
 
     def surface_points_in_image_space(
         self,
@@ -102,6 +107,9 @@ class SurfaceTracker:
             surface=surface,
             location=location,
             ignore_location_staleness=ignore_location_staleness,
+        )
+        new_positions = surface.orientation.map_surface_corners_to_default(
+            new_positions
         )
 
         if len(new_positions) == 0:
@@ -205,7 +213,22 @@ class SurfaceTracker:
         for marker_uid in marker_uids:
             surface._remove_marker(marker_uid=marker_uid)
 
+    def set_orientation(
+        self, surface: Surface, starting_with: CornerId, clockwise: bool = True
+    ):
+        # Validate the surface definition
+        self.__argument_validator.validate_surface(surface=surface)
+
+        orientation = SurfaceOrientation(starting_with, clockwise)
+        surface.orientation = orientation
+
     # ## Locating a surface
+
+    def get_relative_rotation(self, surface: Surface) -> int:
+        # Validate the surface definition
+        self.__argument_validator.validate_surface(surface=surface)
+
+        return surface.orientation.get_relative_rotation()
 
     def locate_surface(
         self, surface: Surface, markers: T.List[Marker]
@@ -240,7 +263,9 @@ class SurfaceTracker:
             surface=surface, location=location, ignore_location_staleness=False
         )
 
-        return SurfaceVisualAnchors._create_from_location(location=location)
+        return SurfaceVisualAnchors._create_from_location(
+            location=location, orientation=surface.orientation
+        )
 
     def locate_surface_image_crop(
         self,
@@ -257,6 +282,13 @@ class SurfaceTracker:
         self.__argument_validator.validate_surface_and_location(
             surface=surface, location=location, ignore_location_staleness=False
         )
+
+        # swap width and height if surface location is turned by 90 degree in comparison
+        # to internal surface representation
+        if surface.orientation.get_relative_rotation() % 180 != 0:
+            temp = width
+            width = height
+            height = temp
 
         return SurfaceImageCrop._create_image_crop(
             location, camera, width=width, height=height

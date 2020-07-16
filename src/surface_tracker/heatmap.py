@@ -29,13 +29,11 @@ class SurfaceHeatmap:
 
     @staticmethod
     def _create_surface_heatmap(
-        points_in_image_space: T.List[T.Tuple[int, int]],
-        location: SurfaceLocation,
+        points_in_image_space: T.List[T.Tuple[int, int]], location: SurfaceLocation
     ):
         surface_heatmap = SurfaceHeatmap(surface_uid=location.surface_uid)
         surface_heatmap._add_points(
-            points_in_image_space=points_in_image_space,
-            location=location,
+            points_in_image_space=points_in_image_space, location=location
         )
         return surface_heatmap
 

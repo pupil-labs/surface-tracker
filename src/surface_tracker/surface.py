@@ -19,6 +19,7 @@ import cv2
 from .coordinate_space import CoordinateSpace
 from .corner import CornerId
 from .marker import Marker, MarkerId, _Marker
+from .orientation import SurfaceOrientation
 
 
 logger = logging.getLogger(__name__)
@@ -74,6 +75,16 @@ class Surface(abc.ABC):
     @property
     def registered_marker_uids(self) -> T.Set[MarkerId]:
         return set(self._registered_markers_by_uid_undistorted.keys())
+
+    @property
+    @abc.abstractmethod
+    def orientation(self) -> SurfaceOrientation:
+        raise NotImplementedError()
+
+    @orientation.setter
+    @abc.abstractmethod
+    def orientation(self, value: SurfaceOrientation):
+        raise NotImplementedError()
 
     # ## Update
 
@@ -167,6 +178,7 @@ class Surface(abc.ABC):
             uid=uid,
             name=name,
             registered_markers_undistorted=registered_markers_undistorted,
+            orientation=SurfaceOrientation(),
         )
 
     # ## Private
@@ -349,17 +361,25 @@ class _Surface_V2(Surface):
     ):
         self.__registered_markers_by_uid_undistorted = value
 
+    @property
+    def orientation(self) -> SurfaceOrientation:
+        return self.__orientation
+
+    @orientation.setter
+    def orientation(self, value: SurfaceOrientation):
+        self.__orientation = value
+
     def as_dict(self) -> dict:
         registered_markers_undistorted = self._registered_markers_by_uid_undistorted
         registered_markers_undistorted = dict(
             (k, v.as_dict()) for k, v in registered_markers_undistorted.items()
         )
-
         return {
             "version": self.version,
             "uid": str(self.uid),
             "name": self.name,
             "registered_markers_undistorted": registered_markers_undistorted,
+            "orientation": self.orientation.as_dict(),
         }
 
     @staticmethod
@@ -377,10 +397,18 @@ class _Surface_V2(Surface):
                 for k, v in registered_markers_undistorted.items()
             )
 
+            orientation_dict = value.get("orientation", None)
+            if orientation_dict:
+                orientation = SurfaceOrientation.from_dict(orientation_dict)
+            else:
+                # use default if surface was saved as dict before this change
+                orientation = SurfaceOrientation()
+
             return _Surface_V2(
                 uid=SurfaceId(value["uid"]),
                 name=value["name"],
                 registered_markers_undistorted=registered_markers_undistorted,
+                orientation=orientation,
             )
         except Exception as err:
             raise ValueError(err)
@@ -390,10 +418,12 @@ class _Surface_V2(Surface):
         uid: SurfaceId,
         name: str,
         registered_markers_undistorted: T.Mapping[MarkerId, Marker],
+        orientation: SurfaceOrientation,
     ):
         self.__uid = uid
         self.__name = name
         self.__registered_markers_by_uid_undistorted = registered_markers_undistorted
+        self.__orientation = orientation
         assert all(
             m.coordinate_space == CoordinateSpace.SURFACE_UNDISTORTED
             for m in registered_markers_undistorted.values()

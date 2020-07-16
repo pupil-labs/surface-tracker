@@ -13,18 +13,20 @@ import numpy as np
 
 from .corner import CornerId
 from .location import SurfaceLocation
+from .orientation import SurfaceOrientation
 
 
 class SurfaceVisualAnchors:
     @staticmethod
-    def _create_from_location(location: SurfaceLocation,) -> "SurfaceVisualAnchors":
+    def _create_from_location(
+        location: SurfaceLocation, orientation: SurfaceOrientation
+    ) -> "SurfaceVisualAnchors":
 
         perimeter_corners = CornerId.all_corners()
         perimeter_corners = [c.as_tuple() for c in perimeter_corners]
         perimeter_corners.append(perimeter_corners[0])
 
-        top_indicator_corners = [[0.3, 0.7], [0.7, 0.7], [0.5, 0.9]]
-        top_indicator_corners.append(top_indicator_corners[0])
+        top_indicator_corners = orientation.get_visual_anchor_surface_space()
 
         perimeter_points_surface_space = np.array(perimeter_corners, dtype=np.float32)
         perimeter_points_image_space = location._map_from_surface_to_image(
