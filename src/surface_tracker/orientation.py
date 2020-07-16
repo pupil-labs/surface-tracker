@@ -90,7 +90,7 @@ class SurfaceOrientation:
     def from_dict(value: dict) -> "SurfaceOrientation":
         try:
             return SurfaceOrientation(
-                surface_start_with=getattr(CornerId, value["surface_start_with"]),
+                surface_start_with=CornerId.from_name(value["surface_start_with"]),
                 clockwise=value["clockwise"],
             )
         except Exception as err:

@@ -49,6 +49,10 @@ class CornerId(enum.Enum):
 
         return corners
 
+    @staticmethod
+    def from_name(name: str):
+        return getattr(CornerId, name)
+
     # ## Serialize
 
     @staticmethod
