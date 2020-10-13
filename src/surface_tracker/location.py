@@ -331,6 +331,24 @@ class SurfaceLocation(abc.ABC):
 
         return points
 
+    def __repr__(self):
+        return (
+            f"<{self.__class__.__name__} "
+            + ", ".join(
+                [
+                    f"{attr}={getattr(self, attr, '?')!r}"
+                    for attr in [
+                        "surface_uid",
+                        "is_stale",
+                        "number_of_markers_detected",
+                        "transform_matrix_from_image_to_surface_undistorted",
+                        "transform_matrix_from_surface_to_image_undistorted",
+                    ]
+                ]
+            )
+            + ">"
+        )
+
 
 # #### Helper functions
 
