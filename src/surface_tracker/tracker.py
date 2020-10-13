@@ -252,6 +252,13 @@ class SurfaceTracker:
 
         return location
 
+    def interpolate_locations(
+        self, from_location: SurfaceLocation, to_location: SurfaceLocation, ratio: float
+    ) -> SurfaceLocation:
+        self.__argument_validator.validate_location(from_location, False)
+        self.__argument_validator.validate_location(to_location, False)
+        return SurfaceLocation.interpolate(from_location, to_location, ratio)
+
     def locate_surface_visual_anchors(
         self, surface: Surface, location: SurfaceLocation
     ) -> T.Optional[SurfaceVisualAnchors]:
@@ -371,6 +378,20 @@ class _SurfaceTrackerArgumentValidator:
             )
 
     @staticmethod
+    def validate_location(location: SurfaceLocation, ignore_location_staleness: bool):
+        """ Validate standalone `location` argument
+        """
+
+        if not isinstance(location, SurfaceLocation):
+            raise ValueError(
+                f'Expected an instance of SurfaceLocation, but got "{location.__class__}"'
+            )
+        if (not ignore_location_staleness) and location.is_stale:
+            raise ValueError(
+                f"Stale location: the surface definition has changed; location must be recomputed"
+            )
+
+    @staticmethod
     def validate_surface_and_location(
         surface: Surface, location: SurfaceLocation, ignore_location_staleness: bool
     ):
@@ -378,16 +399,9 @@ class _SurfaceTrackerArgumentValidator:
         """
 
         _SurfaceTrackerArgumentValidator.validate_surface(surface=surface)
-
-        if not isinstance(location, SurfaceLocation):
-            raise ValueError(
-                f'Expected an instance of SurfaceLocation, but got "{location.__class__}"'
-            )
+        _SurfaceTrackerArgumentValidator.validate_location(
+            location=location, ignore_location_staleness=ignore_location_staleness
+        )
 
         if surface.uid != location.surface_uid:
             raise ValueError(f"SurfaceId missmatch: location doesn't belong to surface")
-
-        if (not ignore_location_staleness) and location.is_stale:
-            raise ValueError(
-                f"Stale location: the surface definition has changed; location must be recomputed"
-            )

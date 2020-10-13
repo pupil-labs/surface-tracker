@@ -151,6 +151,47 @@ class SurfaceLocation(abc.ABC):
             transform_matrix_from_surface_to_image_undistorted=transform_matrix_from_surface_to_image_undistorted,
         )
 
+    @staticmethod
+    def interpolate(
+        from_location: "SurfaceLocation", to_location: "SurfaceLocation", ratio: float
+    ) -> "SurfaceLocation":
+        assert from_location.surface_uid == to_location.surface_uid
+
+        # interpolate image to surface:
+        from_transform_image_to_surface = (
+            from_location.transform_matrix_from_image_to_surface_undistorted
+        )
+
+        to_transform_image_to_surface = (
+            to_location.transform_matrix_from_image_to_surface_undistorted
+        )
+
+        interpolated_transform_image_to_surface = (
+            from_transform_image_to_surface
+            + (to_transform_image_to_surface - from_transform_image_to_surface) * ratio
+        )
+
+        # interpolate surface to image:
+        from_transform_surface_to_image = (
+            from_location.transform_matrix_from_surface_to_image_undistorted
+        )
+
+        to_transform_surface_to_image = (
+            to_location.transform_matrix_from_surface_to_image_undistorted
+        )
+
+        interpolated_transform_surface_to_image = (
+            from_transform_surface_to_image
+            + (to_transform_surface_to_image - from_transform_surface_to_image) * ratio
+        )
+
+        return _SurfaceLocation_v2(
+            surface_uid=from_location.surface_uid,
+            number_of_markers_detected=-1,
+            transform_matrix_from_image_to_surface_undistorted=interpolated_transform_image_to_surface,
+            transform_matrix_from_surface_to_image_undistorted=interpolated_transform_surface_to_image,
+        )
+
     # ## Mapping
 
     def _map_from_image_to_surface(
