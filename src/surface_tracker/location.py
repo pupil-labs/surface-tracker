@@ -206,14 +206,14 @@ class SurfaceLocation(abc.ABC):
         )
 
     def _map_from_surface_to_image(
-        self, points: np.ndarray, transform_matrix=None
+        self, points: np.ndarray, transform_matrix=None, custom_transformation=True
     ) -> np.ndarray:
         return self.__map_points(
             points=points,
             transform_matrix=self.__surface_to_image_transform(
                 transform_matrix=transform_matrix
             ),
-            custom_transformation=True,
+            custom_transformation=custom_transformation,
         )
 
     def _map_marker_from_image_to_surface(

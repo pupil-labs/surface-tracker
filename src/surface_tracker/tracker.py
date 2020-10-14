@@ -42,9 +42,19 @@ class SurfaceTracker:
     # ## Inspecting a surface
 
     def surface_corner_positions_in_image_space(
-        self, surface: Surface, location: SurfaceLocation, corners: T.List[CornerId]
+        self,
+        surface: Surface,
+        location: SurfaceLocation,
+        corners: T.List[CornerId],
+        check_flipped_corners: bool = True,
     ) -> T.Mapping[CornerId, T.Tuple[int, int]]:
-        """Return the corner positions in image space.
+        """
+        Return the corner positions in image space.
+
+        Args:
+            check_flipped_corners (bool): surface corners that are behind the camera
+            may appear mirrored/flipped in image space. Set this option to True,
+            to check for this at the expense of compuation time
         """
 
         # Validate the surface definition and the surface location arguments
@@ -59,6 +69,7 @@ class SurfaceTracker:
             surface=surface,
             location=location,
             points=[corner.as_tuple() for corner in corners],
+            check_flipped_corners=check_flipped_corners,
         )
 
         assert len(corners) == len(positions)  # sanity check
@@ -74,8 +85,15 @@ class SurfaceTracker:
         surface: Surface,
         location: SurfaceLocation,
         points: T.List[T.Tuple[float, float]],
+        check_flipped_corners: bool = True,
     ) -> T.List[T.Tuple[int, int]]:
-        """Transform a list of points in surface space into a list of points in image space.
+        """
+        Transform a list of points in surface space into a list of points in image space.
+
+        Args:
+            check_flipped_corners: surface corners that are behind the camera may
+            appear mirrored/flipped in image space. Set this option to True, to
+            check for this at the expense of compuation time
         """
 
         # Validate the surface definition and the surface location arguments
@@ -87,7 +105,8 @@ class SurfaceTracker:
             return []
 
         return location._map_from_surface_to_image(
-            points=np.array(points, dtype=np.float32)
+            points=np.array(points, dtype=np.float32),
+            custom_transformation=check_flipped_corners,
         ).tolist()
 
     # ## Modifying a surface
