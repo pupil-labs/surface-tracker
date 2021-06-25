@@ -371,9 +371,9 @@ class _Surface_V2(Surface):
 
     def as_dict(self) -> dict:
         registered_markers_undistorted = self._registered_markers_by_uid_undistorted
-        registered_markers_undistorted = dict(
-            (k, v.as_dict()) for k, v in registered_markers_undistorted.items()
-        )
+        registered_markers_undistorted = {
+            k: v.as_dict() for k, v in registered_markers_undistorted.items()
+        }
         return {
             "version": self.version,
             "uid": str(self.uid),
@@ -392,10 +392,10 @@ class _Surface_V2(Surface):
             ), f"Surface version missmatch; expected {expected_version}, but got {actual_version}"
 
             registered_markers_undistorted = value["registered_markers_undistorted"]
-            registered_markers_undistorted = dict(
-                (k, Marker.from_dict(v))
+            registered_markers_undistorted = {
+                k: Marker.from_dict(v)
                 for k, v in registered_markers_undistorted.items()
-            )
+            }
 
             orientation_dict = value.get("orientation", None)
             if orientation_dict:

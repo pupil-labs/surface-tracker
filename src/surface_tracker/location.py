@@ -343,7 +343,7 @@ def _perspective_transform(points, transform_matrix):
     if orientation_unflipped and orientation_flipped:
 
         def min_dist(points):
-            return min([np.linalg.norm(p) for p in points])
+            return min(np.linalg.norm(p) for p in points)
 
         if min_dist(points_flipped) < min_dist(points_unflipped):
             return points_flipped

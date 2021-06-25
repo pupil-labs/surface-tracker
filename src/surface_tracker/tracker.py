@@ -154,7 +154,7 @@ class SurfaceTracker:
         )
 
         # Ensure marker uniqueness
-        marker_uids = set(m.uid for m in markers)
+        marker_uids = {m.uid for m in markers}
 
         # Ensure only markers that are not part of the definition will be added
         marker_uids = marker_uids.difference(surface.registered_marker_uids)

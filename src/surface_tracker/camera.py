@@ -12,7 +12,7 @@ import numpy as np
 import cv2
 
 
-class Camera(object):
+class Camera:
     def __init__(
         self, camera_matrix: np.ndarray, distortion_coefficients: np.ndarray
     ) -> np.ndarray:
