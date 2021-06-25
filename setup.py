@@ -11,7 +11,7 @@ from setuptools import setup
 
 setup(
     extras_require={
-        "dev": ["pre-commit", "pytest", "tox", "opencv-python"],
+        "dev": ["pre-commit", "tox"],
         "deploy": ["build", "twine", "bump2version"],
         "example": [
             "opencv-python",
