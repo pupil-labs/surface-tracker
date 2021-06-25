@@ -13,7 +13,6 @@ import typing as T
 from .coordinate_space import CoordinateSpace
 from .corner import CornerId
 
-
 MarkerId = T.NewType("MarkerId", str)
 
 

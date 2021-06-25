@@ -8,6 +8,7 @@ See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
 import pytest
+
 from surface_tracker.corner import CornerId
 
 

@@ -7,6 +7,7 @@ Lesser General Public License (LGPL v3.0).
 See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
+from . import utils
 from .camera import Camera
 from .coordinate_space import CoordinateSpace
 from .corner import CornerId
@@ -14,8 +15,9 @@ from .heatmap import SurfaceHeatmap
 from .image_crop import SurfaceImageCrop
 from .location import SurfaceLocation
 from .marker import Marker, MarkerId
+from .orientation import SurfaceOrientation
 from .surface import Surface, SurfaceId
 from .tracker import SurfaceTracker
 from .visual_anchors import SurfaceVisualAnchors
-from .orientation import SurfaceOrientation
-from . import utils
+
+__version__ = "0.0.1"
