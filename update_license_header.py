@@ -23,7 +23,7 @@ See LICENSE for license details.
 
 
 pattern = re.compile(
-    "(\"{3}|'{3}|[/][*])\n\([*]\)~(.+?)~\([*]\)\n(\"{3}|'{3}|[*][/])",
+    "(\"{3}|'{3}|[/][*])\n\\([*]\\)~(.+?)~\\([*]\\)\n(\"{3}|'{3}|[*][/])",
     re.DOTALL | re.MULTILINE,
 )
 
@@ -71,7 +71,7 @@ def write_header(file_name, license_txt):
     else:
         raise Exception("Dont know how to deal with this filetype")
 
-    with open(file_name, "r") as original:
+    with open(file_name) as original:
         data = original.read()
 
     with open(file_name, "w") as modified:
@@ -97,4 +97,3 @@ if __name__ == "__main__":
 
     for f in match_files:
         write_header(f, license_txt)
-
