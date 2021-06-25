@@ -33,4 +33,3 @@ repos:
     rev: v1.17.0
     hooks:
       - id: setup-cfg-fmt
-        stages: [manual]
