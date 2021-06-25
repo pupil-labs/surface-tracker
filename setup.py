@@ -12,7 +12,7 @@ from setuptools import setup
 setup(
     extras_require={
         "dev": ["pre-commit", "pytest", "tox"],
-        "deploy": ["build", "twine"],
+        "deploy": ["build", "twine", "bump2version"],
         "example": [
             "opencv-python",
             "pupil-apriltags",

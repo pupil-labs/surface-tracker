@@ -19,3 +19,5 @@ from .orientation import SurfaceOrientation
 from .surface import Surface, SurfaceId
 from .tracker import SurfaceTracker
 from .visual_anchors import SurfaceVisualAnchors
+
+__version__ = "0.0.1"
