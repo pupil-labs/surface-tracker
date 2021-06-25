@@ -16,12 +16,11 @@ from .camera import Camera
 from .corner import CornerId
 from .heatmap import SurfaceHeatmap
 from .image_crop import SurfaceImageCrop
-from .marker import Marker, MarkerId
 from .location import SurfaceLocation
+from .marker import Marker, MarkerId
+from .orientation import SurfaceOrientation
 from .surface import Surface
 from .visual_anchors import SurfaceVisualAnchors
-from .orientation import SurfaceOrientation
-
 
 logger = logging.getLogger(__name__)
 

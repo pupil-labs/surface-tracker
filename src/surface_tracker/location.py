@@ -11,14 +11,13 @@ import abc
 import logging
 import typing as T
 
-import numpy as np
 import cv2
+import numpy as np
 
 from .coordinate_space import CoordinateSpace
 from .corner import CornerId
 from .marker import Marker, _Marker
 from .surface import Surface, SurfaceId
-
 
 logger = logging.getLogger(__name__)
 

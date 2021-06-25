@@ -13,14 +13,13 @@ import logging
 import typing as T
 import uuid
 
-import numpy as np
 import cv2
+import numpy as np
 
 from .coordinate_space import CoordinateSpace
 from .corner import CornerId
 from .marker import Marker, MarkerId, _Marker
 from .orientation import SurfaceOrientation
-
 
 logger = logging.getLogger(__name__)
 

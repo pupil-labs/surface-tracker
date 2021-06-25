@@ -9,8 +9,8 @@ See LICENSE for license details.
 """
 import typing as T
 
-import numpy as np
 import cv2
+import numpy as np
 
 from .camera import Camera
 from .corner import CornerId
