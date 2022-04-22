@@ -41,7 +41,7 @@ class Surface(abc.ABC):
 
     # ## Abstract members
 
-    version = None  # type: T.ClassVar[int]
+    version: T.ClassVar[int] = None
 
     @property
     @abc.abstractmethod
