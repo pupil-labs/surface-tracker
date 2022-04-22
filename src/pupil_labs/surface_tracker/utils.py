@@ -1,14 +1,3 @@
-"""
-(*)~---------------------------------------------------------------------------
-Pupil - eye tracking platform
-Copyright (C) 2012-2020 Pupil Labs
-Distributed under the terms of the GNU
-Lesser General Public License (LGPL v3.0).
-See LICENSE for license details.
----------------------------------------------------------------------------~(*)
-"""
-
-
 def left_rotation(a: list, k: int):
     """Rotate list to the left
     e.g.: [1, 2, 3, 4] -> [2, 3, 4, 1]
