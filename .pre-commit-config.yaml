@@ -19,10 +19,16 @@ repos:
         args: ["--py36-plus"]
         exclude: ^bin/
 
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
+    hooks:
+    - id: flake8
+
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
       - id: isort
+        args: [--profile, black]
 
   - repo: https://github.com/psf/black
     rev: 22.3.0

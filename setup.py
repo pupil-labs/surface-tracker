@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 (*)~---------------------------------------------------------------------------
 Pupil - eye tracking platform
@@ -7,18 +8,8 @@ Lesser General Public License (LGPL v3.0).
 See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
-from setuptools import setup
 
-setup(
-    extras_require={
-        "dev": ["pre-commit", "tox"],
-        "deploy": ["build", "twine", "bump2version"],
-        "example": [
-            "opencv-python",
-            "pupil-apriltags",
-            "matplotlib",
-            "Pillow",
-            "msgpack",
-        ],
-    }
-)
+import setuptools
+
+if __name__ == "__main__":
+    setuptools.setup()

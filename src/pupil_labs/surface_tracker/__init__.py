@@ -20,4 +20,31 @@ from .surface import Surface, SurfaceId
 from .tracker import SurfaceTracker
 from .visual_anchors import SurfaceVisualAnchors
 
-__version__ = "0.0.1"
+try:
+    from importlib.metadata import PackageNotFoundError, version
+except ImportError:
+    from importlib_metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("pupil_labs.project_name")
+except PackageNotFoundError:
+    # package is not installed
+    __version__ = "unknown"
+
+__all__ = [
+    "__version__",
+    "utils",
+    "Camera",
+    "CoordinateSpace",
+    "CornerId",
+    "SurfaceHeatmap",
+    "SurfaceImageCrop",
+    "SurfaceLocation",
+    "Marker",
+    "MarkerId",
+    "SurfaceOrientation",
+    "Surface",
+    "SurfaceId",
+    "SurfaceTracker",
+    "SurfaceVisualAnchors",
+]
