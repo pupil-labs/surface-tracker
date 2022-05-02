@@ -277,8 +277,8 @@ class SurfaceLocation(abc.ABC):
         # Perspective transform
 
         shape = points.shape
-        points.shape = (-1, 1, 2)
-        if custom_transformation:
+        points = points.reshape(-1, 1, 2)
+        if custom_transformation and points.shape[0] == 4:
             points = _perspective_transform(points, transform_matrix)
         else:
             points = cv2.perspectiveTransform(points, transform_matrix)
