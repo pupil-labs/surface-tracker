@@ -17,7 +17,7 @@ except ImportError:
     from importlib_metadata import PackageNotFoundError, version
 
 try:
-    __version__ = version("pupil_labs.project_name")
+    __version__ = version("pupil_labs.surface_tracker")
 except PackageNotFoundError:
     # package is not installed
     __version__ = "unknown"
