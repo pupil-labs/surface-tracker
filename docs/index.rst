@@ -1,6 +1,6 @@
 .. include:: ../README.rst
    :start-line: 22
-   :end-line: 38
+   :end-line: 46
 
 Table of Content
 ================

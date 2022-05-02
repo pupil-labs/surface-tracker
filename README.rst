@@ -35,7 +35,15 @@ We recommend installing the pre-packaged binary wheels from PyPI:
 
 .. code-block:: console
 
-    pip install surface-tracker
+   pip install surface-tracker
+
+To run the example, you will need to install some dependencies. You can get them by
+running:
+
+.. code-block:: console
+
+   pip install "surface-tracker[example]"
+
 
 For more information see the `documentation`_.
 
