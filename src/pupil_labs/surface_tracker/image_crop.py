@@ -1,12 +1,3 @@
-"""
-(*)~---------------------------------------------------------------------------
-Pupil - eye tracking platform
-Copyright (C) 2012-2020 Pupil Labs
-Distributed under the terms of the GNU
-Lesser General Public License (LGPL v3.0).
-See LICENSE for license details.
----------------------------------------------------------------------------~(*)
-"""
 import typing as T
 
 import cv2
@@ -40,12 +31,12 @@ class SurfaceImageCrop:
             points=surface_corners_in_surface_space
         )
 
-        surface_corners_in_image_space_distorted = camera.distort_and_project(
-            points=surface_corners_in_image_space
-        )
+        # surface_corners_in_image_space_distorted = camera.distort_and_project(
+        #     points=surface_corners_in_image_space
+        # )
 
         crop_size = SurfaceImageCrop.__calculate_crop_size(
-            *surface_corners_in_image_space_distorted, width=width, height=height
+            *surface_corners_in_image_space, width=width, height=height
         )
         crop_w, crop_h = crop_size
 
@@ -58,12 +49,12 @@ class SurfaceImageCrop:
         crop_corners_in_image_space = np.array(
             crop_corners_in_image_space, dtype=np.float32
         )
-        surface_corners_in_image_space_distorted = np.array(
-            surface_corners_in_image_space_distorted, dtype=np.float32
+        surface_corners_in_image_space = np.array(
+            surface_corners_in_image_space, dtype=np.float32
         )
 
         perspective_transform = cv2.getPerspectiveTransform(
-            surface_corners_in_image_space_distorted, crop_corners_in_image_space
+            surface_corners_in_image_space, crop_corners_in_image_space
         )
 
         return SurfaceImageCrop(

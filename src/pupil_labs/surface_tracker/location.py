@@ -1,12 +1,3 @@
-"""
-(*)~---------------------------------------------------------------------------
-Pupil - eye tracking platform
-Copyright (C) 2012-2020 Pupil Labs
-Distributed under the terms of the GNU
-Lesser General Public License (LGPL v3.0).
-See LICENSE for license details.
----------------------------------------------------------------------------~(*)
-"""
 import abc
 import logging
 import typing as T
@@ -31,18 +22,20 @@ class SurfaceLocation(abc.ABC):
         version = cls.version
         if version is None:
             raise ValueError(
-                f'SurfaceLocation subclass {cls.__name__} must overwrite class property "version"'
+                f'SurfaceLocation subclass {cls.__name__} must overwrite class '
+                'property "version"'
             )
         if version in storage:
             raise ValueError(
-                f"SurfaceLocation subclass {cls.__name__} defines an already registered version {version}"
+                f"SurfaceLocation subclass {cls.__name__} defines an already "
+                "registered version {version}"
             )
         storage[version] = cls
         return super().__init_subclass__()
 
     # ## Abstract members
 
-    version = None  # type: ClassVar[int]
+    version: T.ClassVar[int] = None
 
     @property
     @abc.abstractmethod
@@ -146,8 +139,12 @@ class SurfaceLocation(abc.ABC):
         return _SurfaceLocation_v2(
             surface_uid=surface.uid,
             number_of_markers_detected=len(matching_marker_uids),
-            transform_matrix_from_image_to_surface_undistorted=transform_matrix_from_image_to_surface_undistorted,
-            transform_matrix_from_surface_to_image_undistorted=transform_matrix_from_surface_to_image_undistorted,
+            transform_matrix_from_image_to_surface_undistorted=(
+                transform_matrix_from_image_to_surface_undistorted
+            ),
+            transform_matrix_from_surface_to_image_undistorted=(
+                transform_matrix_from_surface_to_image_undistorted
+            ),
         )
 
     # ## Mapping
@@ -280,8 +277,8 @@ class SurfaceLocation(abc.ABC):
         # Perspective transform
 
         shape = points.shape
-        points.shape = (-1, 1, 2)
-        if custom_transformation:
+        points = points.reshape(-1, 1, 2)
+        if custom_transformation and points.shape[0] == 4:
             points = _perspective_transform(points, transform_matrix)
         else:
             points = cv2.perspectiveTransform(points, transform_matrix)
@@ -388,7 +385,7 @@ def _find_homographies(points_A, points_B):
 
 class _SurfaceLocation_v2(SurfaceLocation):
 
-    version = 2  # type: ClassVar[int]
+    version = 2  # type: T.ClassVar[int]
 
     @property
     def surface_uid(self) -> SurfaceId:
@@ -435,8 +432,12 @@ class _SurfaceLocation_v2(SurfaceLocation):
             "version": self.version,
             "surface_uid": str(self.surface_uid),
             "number_of_markers_detected": self.number_of_markers_detected,
-            "transform_matrix_from_image_to_surface_undistorted": self.transform_matrix_from_image_to_surface_undistorted.tolist(),
-            "transform_matrix_from_surface_to_image_undistorted": self.transform_matrix_from_surface_to_image_undistorted.tolist(),
+            "transform_matrix_from_image_to_surface_undistorted": (
+                self.transform_matrix_from_image_to_surface_undistorted.tolist()
+            ),
+            "transform_matrix_from_surface_to_image_undistorted": (
+                self.transform_matrix_from_surface_to_image_undistorted.tolist()
+            ),
         }
 
     @staticmethod
@@ -444,9 +445,10 @@ class _SurfaceLocation_v2(SurfaceLocation):
         try:
             actual_version = value["version"]
             expected_version = _SurfaceLocation_v2.version
-            assert (
-                expected_version == actual_version
-            ), f"SurfaceLocation version missmatch; expected {expected_version}, but got {actual_version}"
+            assert expected_version == actual_version, (
+                f"SurfaceLocation version missmatch; expected {expected_version}, but "
+                f"got {actual_version}"
+            )
             return _SurfaceLocation_v2(
                 surface_uid=SurfaceId(value["surface_uid"]),
                 number_of_markers_detected=int(value["number_of_markers_detected"]),

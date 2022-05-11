@@ -1,12 +1,3 @@
-"""
-(*)~---------------------------------------------------------------------------
-Pupil - eye tracking platform
-Copyright (C) 2012-2020 Pupil Labs
-Distributed under the terms of the GNU
-Lesser General Public License (LGPL v3.0).
-See LICENSE for license details.
----------------------------------------------------------------------------~(*)
-"""
 import abc
 import typing as T
 
@@ -14,6 +5,7 @@ from .coordinate_space import CoordinateSpace
 from .corner import CornerId
 
 MarkerId = T.NewType("MarkerId", str)
+"""Type annotation for marker ids"""
 
 
 class Marker(abc.ABC):
@@ -58,7 +50,8 @@ class Marker(abc.ABC):
         actual_len = len(undistorted_image_space_vertices)
         if expected_len != actual_len:
             raise ValueError(
-                f'Expected "vertices" to have a lenght of {expected_len}, but got {actual_len}'
+                f'Expected "vertices" to have a lenght of {expected_len}, but got '
+                f'{actual_len}'
             )
         vertices_by_corner_id = dict(zip(corners, undistorted_image_space_vertices))
 

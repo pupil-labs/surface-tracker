@@ -1,12 +1,3 @@
-"""
-(*)~---------------------------------------------------------------------------
-Pupil - eye tracking platform
-Copyright (C) 2012-2020 Pupil Labs
-Distributed under the terms of the GNU
-Lesser General Public License (LGPL v3.0).
-See LICENSE for license details.
----------------------------------------------------------------------------~(*)
-"""
 import abc
 import collections
 import logging
@@ -25,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 SurfaceId = T.NewType("SurfaceId", str)
+"""Type annotation for surface ids"""
 
 
 class Surface(abc.ABC):
@@ -36,18 +28,20 @@ class Surface(abc.ABC):
         version = cls.version
         if version is None:
             raise ValueError(
-                f'Surface subclass {cls.__name__} must overwrite class property "version"'
+                f'Surface subclass {cls.__name__} must overwrite class property '
+                '"version"'
             )
         if version in storage:
             raise ValueError(
-                f"Surface subclass {cls.__name__} defines an already registered version {version}"
+                f"Surface subclass {cls.__name__} defines an already registered "
+                f"version {version}"
             )
         storage[version] = cls
         return super().__init_subclass__()
 
     # ## Abstract members
 
-    version = None  # type: ClassVar[int]
+    version: T.ClassVar[int] = None
 
     @property
     @abc.abstractmethod
@@ -259,8 +253,8 @@ def _bounding_quadrangle(vertices: np.ndarray):
 
     # According to OpenCV implementation, cv2.convexHull only accepts arrays with
     # 32bit floats (CV_32F) or 32bit signed ints (CV_32S).
-    # See: https://github.com/opencv/opencv/blob/3.4/modules/imgproc/src/convhull.cpp#L137
-    # See: https://github.com/pupil-labs/pupil/issues/1544
+    # See: https://github.com/pupil-labs/pupil/issues/1544 and
+    # https://github.com/opencv/opencv/blob/3.4/modules/imgproc/src/convhull.cpp#L137
     vertices = np.asarray(vertices, dtype=np.float32)
 
     hull_points = cv2.convexHull(vertices, clockwise=False)
@@ -320,8 +314,13 @@ def _GetAnglesPolyline(polyline, closed=False):
     # print 'cb:',cb
 
     # float dot = (ab.x * cb.x + ab.y * cb.y) dot product
-    # dot  = np.dot(ab,cb.T) # this is a full matrix mulitplication we only need the diagonal \
-    # dot = dot.diagonal() #  because all we look for are the dotproducts of corresponding vectors (ab[n] and cb[n])
+
+    # this is a full matrix mulitplication we only need the diagonal \:
+    # dot  = np.dot(ab,cb.T)
+
+    # because all we look for are the dotproducts of corresponding vectors (ab[n] and
+    # cb[n]):
+    # dot = dot.diagonal()
     dot = np.sum(
         ab * cb, axis=1
     )  # or just do the dot product of the correspoing vectors in the first place!
@@ -386,9 +385,10 @@ class _Surface_V2(Surface):
         try:
             actual_version = value["version"]
             expected_version = _Surface_V2.version
-            assert (
-                expected_version == actual_version
-            ), f"Surface version missmatch; expected {expected_version}, but got {actual_version}"
+            assert expected_version == actual_version, (
+                f"Surface version missmatch; expected {expected_version}, but got "
+                f"{actual_version}"
+            )
 
             registered_markers_undistorted = value["registered_markers_undistorted"]
             registered_markers_undistorted = {

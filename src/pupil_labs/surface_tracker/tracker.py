@@ -1,14 +1,6 @@
-"""
-(*)~---------------------------------------------------------------------------
-Pupil - eye tracking platform
-Copyright (C) 2012-2020 Pupil Labs
-Distributed under the terms of the GNU
-Lesser General Public License (LGPL v3.0).
-See LICENSE for license details.
----------------------------------------------------------------------------~(*)
-"""
 import logging
 import typing as T
+import weakref
 
 import numpy as np
 
@@ -72,7 +64,9 @@ class SurfaceTracker:
         location: SurfaceLocation,
         points: T.List[T.Tuple[float, float]],
     ) -> T.List[T.Tuple[int, int]]:
-        """Transform a list of points in surface space into a list of points in image space."""
+        """Transform a list of points in surface space into a list of points in image
+        space.
+        """
 
         # Validate the surface definition and the surface location arguments
         self.__argument_validator.validate_surface_and_location(
@@ -320,9 +314,6 @@ class SurfaceTracker:
 # #### Private Helpers
 
 
-import weakref
-
-
 class _SurfaceTrackerWeakLocationStore:
     def __init__(self):
         self.__storage = {}
@@ -370,7 +361,8 @@ class _SurfaceTrackerArgumentValidator:
 
         if not isinstance(location, SurfaceLocation):
             raise ValueError(
-                f'Expected an instance of SurfaceLocation, but got "{location.__class__}"'
+                f'Expected an instance of SurfaceLocation, but got '
+                f'"{location.__class__}"'
             )
 
         if surface.uid != location.surface_uid:
@@ -378,5 +370,6 @@ class _SurfaceTrackerArgumentValidator:
 
         if (not ignore_location_staleness) and location.is_stale:
             raise ValueError(
-                f"Stale location: the surface definition has changed; location must be recomputed"
+                f"Stale location: the surface definition has changed; location must be "
+                "recomputed"
             )
