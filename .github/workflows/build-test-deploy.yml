@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build source and wheel distribution
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -27,11 +27,11 @@ jobs:
 
   test:
     name: Test source and wheel distributions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [build]
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.6, 3.7, 3.8, 3.9, "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v3
