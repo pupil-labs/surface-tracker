@@ -62,7 +62,6 @@ class SurfaceHeatmap:
         size: T.Tuple[int, int],
         color_format: T.Optional["SurfaceHeatmap.ColorFormat"] = None,
     ) -> np.ndarray:
-
         if color_format is None:
             color_format = SurfaceHeatmap.ColorFormat.RGB
         elif not isinstance(color_format, SurfaceHeatmap.ColorFormat):

@@ -28,7 +28,6 @@ SurfaceId = T.NewType("SurfaceId", str)
 
 
 class Surface(abc.ABC):
-
     __versioned_subclasses = {}
 
     def __init_subclass__(cls):
@@ -256,7 +255,6 @@ def _get_transform_to_normalized_corners(vertices: np.ndarray) -> np.ndarray:
 
 
 def _bounding_quadrangle(vertices: np.ndarray):
-
     # According to OpenCV implementation, cv2.convexHull only accepts arrays with
     # 32bit floats (CV_32F) or 32bit signed ints (CV_32S).
     # See: https://github.com/opencv/opencv/blob/3.4/modules/imgproc/src/convhull.cpp#L137
@@ -339,7 +337,6 @@ def _GetAnglesPolyline(polyline, closed=False):
 
 
 class _Surface_V2(Surface):
-
     version = 2
 
     @property

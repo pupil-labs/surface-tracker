@@ -127,7 +127,7 @@ class SurfaceTracker:
             ordered_corners, ordered_position_in_surface_space_undistorted
         )
 
-        for (corner, new_undistorted) in corner_updates:
+        for corner, new_undistorted in corner_updates:
             # TODO: Provide Surface API for moving multiple corners in one call
             surface._move_corner(
                 corner=corner, new_position_in_surface_space_undistorted=new_undistorted
@@ -167,7 +167,6 @@ class SurfaceTracker:
         self.__locations_tracker.mark_locations_as_stale_for_surface(surface=surface)
 
         for marker in markers:
-
             marker_undistorted = location._map_marker_from_image_to_surface(
                 marker=marker
             )

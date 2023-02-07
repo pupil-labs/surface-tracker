@@ -86,7 +86,6 @@ def write_header(file_name, license_txt):
 
 
 if __name__ == "__main__":
-
     # find out the cwd and change to the top level Pupil folder
     cwd = os.getcwd()
     pupil_dir = cwd

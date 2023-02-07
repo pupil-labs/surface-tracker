@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 class SurfaceLocation(abc.ABC):
-
     __versioned_subclasses = {}
 
     def __init_subclass__(cls):
@@ -75,7 +74,6 @@ class SurfaceLocation(abc.ABC):
     def _create_location_from_markers(
         surface: Surface, markers: T.List[Marker]
     ) -> "SurfaceLocation":
-
         if surface is None:
             raise ValueError("Surface is None")
 
@@ -177,7 +175,6 @@ class SurfaceLocation(abc.ABC):
     def _map_marker_from_image_to_surface(
         self, marker: Marker, transform_matrix=None
     ) -> Marker:
-
         order = CornerId.all_corners()
 
         vertices_in_image_space = marker._vertices_in_order(order=order)
@@ -203,7 +200,6 @@ class SurfaceLocation(abc.ABC):
     def _map_marker_from_surface_to_image(
         self, marker: Marker, transform_matrix=None
     ) -> Marker:
-
         order = CornerId.all_corners()
 
         vertices_in_surface_space = marker._vertices_in_order(order=order)
@@ -263,7 +259,6 @@ class SurfaceLocation(abc.ABC):
     def __map_points(
         points: np.ndarray, transform_matrix: np.ndarray, custom_transformation=False
     ) -> np.ndarray:
-
         points = np.asarray(points)
 
         # Validate points
@@ -387,7 +382,6 @@ def _find_homographies(points_A, points_B):
 
 
 class _SurfaceLocation_v2(SurfaceLocation):
-
     version = 2  # type: ClassVar[int]
 
     @property
