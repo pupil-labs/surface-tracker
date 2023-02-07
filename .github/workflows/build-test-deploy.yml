@@ -9,10 +9,10 @@ on:
 jobs:
   build:
     name: Build source and wheel distribution
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: Build source package
@@ -20,27 +20,27 @@ jobs:
           pip install build
           python -m build .
       - name: Upload source package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: distribution
           path: dist/
 
   test:
     name: Test source and wheel distributions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [build]
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.6, 3.7, 3.8, 3.9, "3.10", "3.11"]
 
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/download-artifact@v2
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
         with:
           name: distribution
           path: dist/
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -57,8 +57,8 @@ jobs:
     needs: [test]
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
         with:
           name: distribution
           path: dist/

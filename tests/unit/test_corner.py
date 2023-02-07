@@ -13,7 +13,6 @@ from surface_tracker.corner import CornerId
 
 
 def test_corner_id_all_corners():
-
     # Test default arguments
 
     assert [

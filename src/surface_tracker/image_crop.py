@@ -109,7 +109,6 @@ class SurfaceImageCrop:
         width: T.Optional[int],
         height: T.Optional[int],
     ) -> T.Tuple[int, int]:
-
         # compute the width of the new image, which will be the
         # maximum distance between bottom-right and bottom-left
         # x-coordiates or the top-right and top-left x-coordinates

@@ -21,7 +21,6 @@ class SurfaceVisualAnchors:
     def _create_from_location(
         location: SurfaceLocation, orientation: SurfaceOrientation
     ) -> "SurfaceVisualAnchors":
-
         perimeter_corners = CornerId.all_corners()
         perimeter_corners = [c.as_tuple() for c in perimeter_corners]
         perimeter_corners.append(perimeter_corners[0])

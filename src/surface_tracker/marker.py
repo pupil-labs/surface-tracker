@@ -17,7 +17,6 @@ MarkerId = T.NewType("MarkerId", str)
 
 
 class Marker(abc.ABC):
-
     # ## Abstract members
 
     @property
