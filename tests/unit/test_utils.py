@@ -7,6 +7,7 @@ Lesser General Public License (LGPL v3.0).
 See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
+
 import pytest
 
 from surface_tracker.utils import left_rotation, right_rotation
