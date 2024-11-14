@@ -172,7 +172,7 @@ class SurfaceLocation(abc.ABC):
             transform_matrix=self.__surface_to_image_transform(
                 transform_matrix=transform_matrix
             ),
-            custom_transformation=True,
+            custom_transformation=False,
         )
 
     def _map_marker_from_image_to_surface(
