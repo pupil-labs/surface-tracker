@@ -7,6 +7,7 @@ Lesser General Public License (LGPL v3.0).
 See LICENSE for license details.
 ---------------------------------------------------------------------------~(*)
 """
+
 from .corner import CornerId
 
 
